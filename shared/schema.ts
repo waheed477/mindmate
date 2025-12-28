@@ -34,6 +34,8 @@ export const doctors = pgTable("doctors", {
   bio: text("bio"),
   experience: integer("experience").notNull(), // years
   consultationFee: integer("consultation_fee").notNull(),
+  verificationStatus: text("verification_status", { enum: ["unverified", "pending", "verified", "rejected"] }).default("unverified"),
+  verificationNotes: text("verification_notes"),
   availability: jsonb("availability").$type<{
     day: string;
     startTime: string;

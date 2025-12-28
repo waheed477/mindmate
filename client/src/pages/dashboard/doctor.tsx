@@ -5,11 +5,12 @@ import { Navbar } from "@/components/layout-navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle2, Clock, XCircle, Users, Activity, MessageSquare } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, XCircle, Users, Activity, MessageSquare, ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
@@ -35,9 +36,35 @@ export default function DoctorDashboard() {
       <Navbar />
       <div className="container py-8 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold font-display tracking-tight">Dr. {user?.doctor?.fullName}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold font-display tracking-tight">Dr. {user?.doctor?.fullName}</h1>
+            {user?.doctor?.verificationStatus === "verified" ? (
+              <Badge className="bg-green-500/10 text-green-600 border-green-200 gap-1 px-2 py-1">
+                <ShieldCheck className="h-4 w-4" /> Verified
+              </Badge>
+            ) : user?.doctor?.verificationStatus === "pending" ? (
+              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200 gap-1 px-2 py-1">
+                <ShieldQuestion className="h-4 w-4" /> Verification Pending
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 gap-1 px-2 py-1">
+                <ShieldAlert className="h-4 w-4" /> Unverified
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground">Overview of your appointments and patients.</p>
         </div>
+
+        {user?.doctor?.verificationStatus === "unverified" && (
+          <Alert variant="destructive" className="bg-destructive/5 border-destructive/20">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Verification Required</AlertTitle>
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>Your medical license is currently unverified. Please submit your documentation for review.</span>
+              <Button size="sm" variant="outline" className="bg-white hover:bg-white/90">Submit for Verification</Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

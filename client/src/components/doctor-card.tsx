@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Clock, DollarSign } from "lucide-react";
+import { Star, Clock, DollarSign, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { AppointmentDialog } from "./appointment-dialog";
 
@@ -26,9 +26,16 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
                 {doctor.fullName.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full border border-yellow-100 mb-4">
-              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-sm font-bold text-yellow-700">{doctor.rating || "New"}</span>
+            <div className="flex flex-col items-end gap-2 mb-2">
+              {doctor.verificationStatus === "verified" && (
+                <Badge className="bg-green-500/10 text-green-600 border-green-200 gap-1 px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                  <ShieldCheck className="h-3 w-3" /> Verified
+                </Badge>
+              )}
+              <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full border border-yellow-100">
+                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                <span className="text-sm font-bold text-yellow-700">{doctor.rating || "New"}</span>
+              </div>
             </div>
           </div>
         </CardHeader>

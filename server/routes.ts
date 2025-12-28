@@ -160,6 +160,7 @@ async function seedData() {
       bio: "Experienced psychiatrist with 10 years in treating anxiety and depression.",
       experience: 10,
       consultationFee: 150,
+      verificationStatus: "verified",
       availability: [
         { day: "Monday", startTime: "09:00", endTime: "17:00", isAvailable: true },
         { day: "Wednesday", startTime: "09:00", endTime: "17:00", isAvailable: true },
