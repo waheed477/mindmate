@@ -45,10 +45,10 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center space-y-2">
             <Link href="/">
-              <a className="inline-flex items-center justify-center gap-2 text-primary mb-8 hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center gap-2 text-primary mb-8 hover:opacity-80 transition-opacity cursor-pointer">
                 <Brain className="h-10 w-10" />
                 <span className="text-2xl font-bold font-display">MindMate</span>
-              </a>
+              </div>
             </Link>
             <h1 className="text-3xl font-bold font-display tracking-tight">Welcome back</h1>
             <p className="text-muted-foreground">Enter your credentials to access your account</p>
@@ -100,7 +100,7 @@ export default function Login() {
               <div>
                 Don't have an account?{" "}
                 <Link href="/register">
-                  <a className="text-primary hover:underline font-medium">Sign up</a>
+                  <span className="text-primary hover:underline font-medium cursor-pointer">Sign up</span>
                 </Link>
               </div>
             </CardFooter>

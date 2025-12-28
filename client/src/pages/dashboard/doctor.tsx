@@ -5,12 +5,15 @@ import { Navbar } from "@/components/layout-navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle2, Clock, XCircle, Users, Activity, MessageSquare, ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar as CalendarIcon, CheckCircle2, Clock, XCircle, Users, Activity, MessageSquare, ShieldCheck, ShieldAlert, ShieldQuestion, Plus, Trash2 } from "lucide-react";
+import { format, startOfWeek, addDays, addMinutes, parse, isSameDay } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
@@ -74,9 +77,10 @@ export default function DoctorDashboard() {
         </div>
 
         <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
             <TabsTrigger value="requests">Requests ({pendingAppointments.length})</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
@@ -182,7 +186,65 @@ export default function DoctorDashboard() {
             ))}
           </TabsContent>
           
-           <TabsContent value="history" className="space-y-4 mt-6">
+          <TabsContent value="schedule" className="mt-6">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <Card className="lg:col-span-1">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-primary" />
+                    Select Date
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Calendar 
+                    mode="single"
+                    className="rounded-md border shadow-sm"
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <CardTitle className="text-lg">Availability Slots</CardTitle>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="h-4 w-4" /> Add Slot
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {user?.doctor?.availability?.map((slot: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+                        <div className="flex items-center gap-4">
+                          <Badge variant="outline" className="bg-primary/5 text-primary">
+                            {slot.day}
+                          </Badge>
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            {slot.startTime} - {slot.endTime}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={slot.isAvailable ? "default" : "secondary"}>
+                            {slot.isAvailable ? "Available" : "Unavailable"}
+                          </Badge>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )) || (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Clock className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                        <p>No recurring availability slots defined.</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4 mt-6">
             {historyAppointments.map((app) => (
               <Card key={app.id} className="bg-muted/30">
                 <CardContent className="p-6">

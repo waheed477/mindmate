@@ -108,10 +108,10 @@ export default function Register() {
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-2">
           <Link href="/">
-            <a className="inline-flex items-center justify-center gap-2 text-primary hover:opacity-80 transition-opacity">
+            <div className="inline-flex items-center justify-center gap-2 text-primary hover:opacity-80 transition-opacity cursor-pointer">
               <Brain className="h-10 w-10" />
               <span className="text-2xl font-bold font-display">MindMate</span>
-            </a>
+            </div>
           </Link>
           <h1 className="text-3xl font-bold font-display">Create your account</h1>
         </div>

@@ -22,24 +22,24 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/">
-            <a className="flex items-center gap-2 text-primary hover:opacity-90 transition-opacity">
+            <div className="flex items-center gap-2 text-primary hover:opacity-90 transition-opacity cursor-pointer">
               <Brain className="h-8 w-8" />
               <span className="text-xl font-bold font-display tracking-tight">MindMate</span>
-            </a>
+            </div>
           </Link>
 
           {user && (
             <div className="hidden md:flex items-center gap-6">
               <Link href={dashboardLink}>
-                <a className={`text-sm font-medium transition-colors hover:text-primary ${location === dashboardLink ? "text-primary" : "text-muted-foreground"}`}>
+                <div className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${location === dashboardLink ? "text-primary" : "text-muted-foreground"}`}>
                   Dashboard
-                </a>
+                </div>
               </Link>
               {!isDoctor && (
                 <Link href="/doctors">
-                  <a className={`text-sm font-medium transition-colors hover:text-primary ${location === "/doctors" ? "text-primary" : "text-muted-foreground"}`}>
+                  <div className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${location === "/doctors" ? "text-primary" : "text-muted-foreground"}`}>
                     Find Doctors
-                  </a>
+                  </div>
                 </Link>
               )}
             </div>
