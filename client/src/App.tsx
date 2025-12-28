@@ -58,10 +58,17 @@ function Router() {
   );
 }
 
+import { Footer } from "@/components/layout-footer";
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1">
+          <Router />
+        </main>
+        <Footer />
+      </div>
       <Toaster />
     </QueryClientProvider>
   );
