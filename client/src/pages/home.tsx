@@ -1,31 +1,68 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShieldCheck, HeartPulse, Clock } from "lucide-react";
 import { Navbar } from "@/components/layout-navbar";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import image1 from "@assets/stock_images/mental_health_suppor_2eb9fe48.jpg";
+import image2 from "@assets/stock_images/mental_health_suppor_e35f5b45.jpg";
+import image3 from "@assets/stock_images/mental_health_suppor_c02cab2e.jpg";
+
+const heroImages = [image1, image2, image3];
 
 export default function Home() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background font-sans">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-32 pb-16">
-        <div className="container px-4 md:px-6 relative z-10">
-          <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden py-20">
+        {/* Background Slider */}
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              key={currentImageIndex}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0"
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display tracking-tight text-foreground">
+              <div 
+                className="w-full h-full bg-cover bg-center"
+                style={{ backgroundImage: `url(${heroImages[currentImageIndex]})` }}
+              >
+                {/* Dark Wash Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="container px-4 md:px-6 relative z-10">
+          <div className="flex flex-col items-start text-left space-y-8 max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display tracking-tight text-white leading-tight">
                 Mental Healthcare <br />
-                <span className="text-primary">Reimagined for You</span>
+                <span className="text-primary-foreground bg-primary/20 px-4 rounded-lg backdrop-blur-sm">Reimagined</span>
               </h1>
             </motion.div>
             
             <motion.p 
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl"
+              className="text-lg md:text-xl text-white/90 max-w-xl leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
@@ -45,18 +82,12 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/doctors">
-                <Button variant="outline" size="lg" className="rounded-full px-8 text-lg h-12 bg-background/50 backdrop-blur border-primary/20 hover:bg-primary/5">
+                <Button variant="outline" size="lg" className="rounded-full px-8 text-lg h-12 bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20">
                   Find a Doctor
                 </Button>
               </Link>
             </motion.div>
           </div>
-        </div>
-        
-        {/* Abstract Background Shapes */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-accent/30 blur-3xl" />
         </div>
       </section>
 
