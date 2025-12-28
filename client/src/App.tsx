@@ -35,12 +35,17 @@ function ProtectedRoute({ component: Component, allowedRole }: { component: any,
   return <Component />;
 }
 
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       
       {/* Protected Routes */}
       <Route path="/doctors">
