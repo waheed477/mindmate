@@ -1,19 +1,30 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppointments, useUpdateAppointmentStatus } from "@/hooks/use-appointments";
 import { Navbar } from "@/components/layout-navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle2, Clock, XCircle, Users, Activity } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, XCircle, Users, Activity, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
   const { data: appointments, isLoading } = useAppointments();
-  const { mutate: updateStatus } = useUpdateAppointmentStatus();
+  const { mutate: updateStatus, isPending } = useUpdateAppointmentStatus();
+  const [selectedAppointment, setSelectedAppointment] = useState<number | null>(null);
+  const [noteText, setNoteText] = useState("");
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
+  const handleUpdateStatus = (id: number, status: string) => {
+    updateStatus({ id, status, notes: noteText || undefined });
+    setSelectedAppointment(null);
+    setNoteText("");
+  };
 
   const pendingAppointments = appointments?.filter((app) => app.status === "pending") || [];
   const upcomingAppointments = appointments?.filter((app) => app.status === "accepted").sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) || [];
@@ -61,15 +72,24 @@ export default function DoctorDashboard() {
                     <div className="flex items-center gap-3">
                       <Button 
                         size="sm" 
+                        variant="ghost" 
+                        className="gap-2"
+                        onClick={() => setSelectedAppointment(app.id)}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Reply
+                      </Button>
+                      <Button 
+                        size="sm" 
                         variant="outline" 
                         className="text-destructive border-destructive/20 hover:bg-destructive/5"
-                        onClick={() => updateStatus({ id: app.id, status: "rejected" })}
+                        onClick={() => handleUpdateStatus(app.id, "rejected")}
                       >
                         Decline
                       </Button>
                       <Button 
                         size="sm"
-                        onClick={() => updateStatus({ id: app.id, status: "accepted" })}
+                        onClick={() => handleUpdateStatus(app.id, "accepted")}
                       >
                         Accept Request
                       </Button>
@@ -78,6 +98,34 @@ export default function DoctorDashboard() {
                 </Card>
               ))
             )}
+
+            <Dialog open={selectedAppointment !== null} onOpenChange={(open) => !open && setSelectedAppointment(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Message Patient</DialogTitle>
+                  <DialogDescription>
+                    Send a response or medicine suggestion to the patient before accepting the appointment.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Textarea
+                    placeholder="Type your message or medicine suggestions here..."
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    className="min-h-[120px]"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Cancel</Button>
+                  <Button 
+                    onClick={() => selectedAppointment && handleUpdateStatus(selectedAppointment, "pending")}
+                    disabled={isPending || !noteText.trim()}
+                  >
+                    Send Message
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="upcoming" className="space-y-4 mt-6">
