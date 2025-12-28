@@ -1,16 +1,20 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppointments } from "@/hooks/use-appointments";
 import { Navbar } from "@/components/layout-navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function PatientDashboard() {
   const { user } = useAuth();
   const { data: appointments, isLoading } = useAppointments();
+  const [viewingNotes, setViewingNotes] = useState<{ doctor: string, notes: string } | null>(null);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
@@ -50,7 +54,7 @@ export default function PatientDashboard() {
             ) : (
               <div className="space-y-4">
                 {upcomingAppointments.map((app) => (
-                  <AppointmentCard key={app.id} appointment={app} />
+                  <AppointmentCard key={app.id} appointment={app} onViewNotes={(notes) => setViewingNotes({ doctor: app.doctor?.fullName || 'Doctor', notes })} />
                 ))}
               </div>
             )}
@@ -61,7 +65,7 @@ export default function PatientDashboard() {
             ) : (
               <div className="space-y-4">
                 {pastAppointments.map((app) => (
-                  <AppointmentCard key={app.id} appointment={app} isHistory />
+                  <AppointmentCard key={app.id} appointment={app} isHistory onViewNotes={(notes) => setViewingNotes({ doctor: app.doctor?.fullName || 'Doctor', notes })} />
                 ))}
               </div>
             )}
@@ -84,11 +88,30 @@ export default function PatientDashboard() {
           </div>
         </div>
       </div>
+
+      <Dialog open={viewingNotes !== null} onOpenChange={(open) => !open && setViewingNotes(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Message from {viewingNotes?.doctor}</DialogTitle>
+            <DialogDescription>
+              Medical advice or suggestions regarding your appointment.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="mt-4 max-h-[300px] rounded-md border p-4">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+              {viewingNotes?.notes}
+            </div>
+          </ScrollArea>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setViewingNotes(null)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function AppointmentCard({ appointment, isHistory }: { appointment: any, isHistory?: boolean }) {
+function AppointmentCard({ appointment, isHistory, onViewNotes }: { appointment: any, isHistory?: boolean, onViewNotes: (notes: string) => void }) {
   const statusColors = {
     pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
     accepted: "bg-green-100 text-green-800 border-green-200",
@@ -113,10 +136,23 @@ function AppointmentCard({ appointment, isHistory }: { appointment: any, isHisto
             <h3 className="font-semibold text-lg">{appointment.doctor?.fullName}</h3>
             <p className="text-sm text-muted-foreground">{appointment.doctor?.specialization}</p>
           </div>
-          <Badge variant="outline" className={`${statusColors[appointment.status as keyof typeof statusColors]} capitalize gap-1 pr-3`}>
-            <StatusIcon className="h-3 w-3" />
-            {appointment.status}
-          </Badge>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant="outline" className={`${statusColors[appointment.status as keyof typeof statusColors]} capitalize gap-1 pr-3`}>
+              <StatusIcon className="h-3 w-3" />
+              {appointment.status}
+            </Badge>
+            {appointment.notes && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={() => onViewNotes(appointment.notes)}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                View Doctor's Note
+              </Button>
+            )}
+          </div>
         </div>
         
         <div className="flex gap-6 text-sm">
@@ -129,13 +165,6 @@ function AppointmentCard({ appointment, isHistory }: { appointment: any, isHisto
             <span>{format(new Date(appointment.date), "p")}</span>
           </div>
         </div>
-
-        {appointment.notes && (
-          <div className="mt-4 p-3 bg-muted rounded-md text-sm">
-            <span className="font-semibold block mb-1">Doctor's Note:</span>
-            {appointment.notes}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
