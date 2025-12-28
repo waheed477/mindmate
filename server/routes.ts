@@ -43,20 +43,20 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     const user = req.user as any; // Cast to any to access role/id easily
 
-    let appointments = [];
+    let appointmentsList: any[] = [];
     if (user.role === 'patient') {
       const patient = await storage.getPatientByUserId(user.id);
       if (patient) {
-        appointments = await storage.getAppointmentsByPatient(patient.id);
+        appointmentsList = await storage.getAppointmentsByPatient(patient.id);
       }
     } else if (user.role === 'doctor') {
       const doctor = await storage.getDoctorByUserId(user.id);
       if (doctor) {
-        appointments = await storage.getAppointmentsByDoctor(doctor.id);
+        appointmentsList = await storage.getAppointmentsByDoctor(doctor.id);
       }
     }
     
-    res.json(appointments);
+    res.json(appointmentsList);
   });
 
   app.post(api.appointments.create.path, async (req, res) => {

@@ -21,7 +21,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
           <div className="h-24 bg-gradient-to-r from-primary/10 to-primary/5" />
           <div className="px-6 -mt-12 flex justify-between items-end">
             <Avatar className="h-24 w-24 border-4 border-background shadow-md">
-              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${doctor.username}`} />
+              <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${doctor.id}`} />
               <AvatarFallback className="text-xl bg-primary/10 text-primary font-bold">
                 {doctor.fullName.charAt(0)}
               </AvatarFallback>

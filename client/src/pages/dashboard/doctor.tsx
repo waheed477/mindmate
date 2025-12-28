@@ -21,7 +21,7 @@ export default function DoctorDashboard() {
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
-  const handleUpdateStatus = (id: number, status: string) => {
+  const handleUpdateStatus = (id: number, status: "pending" | "accepted" | "rejected" | "cancelled" | "completed") => {
     updateStatus({ id, status, notes: noteText || undefined });
     setSelectedAppointment(null);
     setNoteText("");
@@ -145,7 +145,11 @@ export default function DoctorDashboard() {
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Cancel</Button>
                   <Button 
-                    onClick={() => selectedAppointment && handleUpdateStatus(selectedAppointment, "pending")}
+                    onClick={() => {
+                      if (selectedAppointment) {
+                        handleUpdateStatus(selectedAppointment, "pending");
+                      }
+                    }}
                     disabled={isPending || !noteText.trim()}
                   >
                     Send Message
