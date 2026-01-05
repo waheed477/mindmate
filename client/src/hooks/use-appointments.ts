@@ -1,68 +1,222 @@
+// client/src/hooks/use-appointments.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type InsertAppointment } from "@shared/routes";
-import { useToast } from "@/hooks/use-toast";
+import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
 
-type CreateAppointmentData = Omit<InsertAppointment, 'patientId'>;
-type UpdateStatusData = { id: number; status: "pending" | "accepted" | "rejected" | "cancelled" | "completed"; notes?: string };
+const API_BASE = "http://localhost:3000/api";
 
-export function useAppointments() {
+// Get appointments for current user
+export const useAppointments = () => {
   return useQuery({
-    queryKey: [api.appointments.list.path],
+    queryKey: ["appointments"],
     queryFn: async () => {
-      const res = await fetch(api.appointments.list.path);
-      if (!res.ok) throw new Error("Failed to fetch appointments");
-      return api.appointments.list.responses[200].parse(await res.json());
-    },
-  });
-}
-
-export function useCreateAppointment() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (data: CreateAppointmentData) => {
-      const res = await fetch(api.appointments.create.path, {
-        method: api.appointments.create.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/my-appointments`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      if (!res.ok) throw new Error("Failed to create appointment");
-      return api.appointments.create.responses[201].parse(await res.json());
+      if (!response.ok) {
+        throw new Error("Failed to fetch appointments");
+      }
+
+      const data = await response.json();
+      return data.appointments as Appointment[];
+    },
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Get doctor's appointments
+export const useDoctorAppointments = (doctorId: string) => {
+  return useQuery({
+    queryKey: ["doctor-appointments", doctorId],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/doctor/${doctorId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch doctor appointments");
+      }
+
+      const data = await response.json();
+      return data.appointments as Appointment[];
+    },
+    enabled: !!doctorId,
+  });
+};
+
+// Get patient's appointments
+export const usePatientAppointments = (patientId: string) => {
+  return useQuery({
+    queryKey: ["patient-appointments", patientId],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/patient/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch patient appointments");
+      }
+
+      const data = await response.json();
+      return data.appointments as Appointment[];
+    },
+    enabled: !!patientId,
+  });
+};
+
+// Create new appointment
+export const useCreateAppointment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (appointmentData: CreateAppointmentData) => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(appointmentData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create appointment");
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
-      toast({ title: "Request Sent", description: "Your appointment request has been sent to the doctor." });
-    },
-    onError: (err) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      // Invalidate appointments queries
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["patient-appointments"] });
     },
   });
-}
+};
 
-export function useUpdateAppointmentStatus() {
+// Update appointment (status, notes, etc.)
+export const useUpdateAppointment = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, ...data }: UpdateStatusData) => {
-      const url = buildUrl(api.appointments.updateStatus.path, { id });
-      const res = await fetch(url, {
-        method: api.appointments.updateStatus.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+    mutationFn: async ({ id, ...updateData }: UpdateAppointmentData & { id: string }) => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
       });
 
-      if (!res.ok) throw new Error("Failed to update status");
-      return api.appointments.updateStatus.responses[200].parse(await res.json());
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update appointment");
+      }
+
+      return await response.json();
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
-      toast({ title: "Status Updated", description: `Appointment marked as ${variables.status}` });
-    },
-    onError: (err) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["patient-appointments"] });
+      
+      // Also invalidate specific appointment
+      queryClient.invalidateQueries({ queryKey: ["appointment", variables.id] });
     },
   });
-}
+};
+
+// Delete appointment
+export const useDeleteAppointment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete appointment");
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    },
+  });
+};
+
+// Get single appointment
+export const useAppointment = (id: string) => {
+  return useQuery({
+    queryKey: ["appointment", id],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch appointment");
+      }
+
+      const data = await response.json();
+      return data.appointment as Appointment;
+    },
+    enabled: !!id,
+  });
+};
+
+// Update appointment status only (for quick actions)
+export const useUpdateAppointmentStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status, notes }: { id: string; status: Appointment["status"]; notes?: string }) => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/appointments/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status, ...(notes && { doctorNotes: notes }) }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update appointment status");
+      }
+
+      return await response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointment", variables.id] });
+    },
+  });
+};

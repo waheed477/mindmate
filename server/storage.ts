@@ -1,160 +1,99 @@
-import { db } from "./db";
-import { 
-  users, patients, doctors, appointments, messages,
-  type User, type InsertUser,
-  type Patient, type InsertPatient,
-  type Doctor, type InsertDoctor,
-  type Appointment, type InsertAppointment,
-  type Message, type InsertMessage
-} from "@shared/schema";
-import { eq, or, and, desc } from "drizzle-orm";
+import { Doctor } from "./models/Doctor";
+import { Patient } from "./models/Patient";
+import { Appointment } from "./models/Appointment";
+import { User } from "./models/User";
+import { Message } from "./models/Message";
 
-export interface IStorage {
-  // User
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-
-  // Patient
-  createPatient(patient: InsertPatient): Promise<Patient>;
-  getPatient(id: number): Promise<Patient | undefined>;
-  getPatientByUserId(userId: number): Promise<Patient | undefined>;
-
-  // Doctor
-  createDoctor(doctor: InsertDoctor): Promise<Doctor>;
-  getDoctor(id: number): Promise<Doctor | undefined>;
-  getDoctorByUserId(userId: number): Promise<Doctor | undefined>;
-  getAllDoctors(): Promise<Doctor[]>;
-
-  // Appointment
-  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
-  getAppointment(id: number): Promise<Appointment | undefined>;
-  getAppointmentsByPatient(patientId: number): Promise<(Appointment & { doctor: Doctor })[]>;
-  getAppointmentsByDoctor(doctorId: number): Promise<(Appointment & { patient: Patient })[]>;
-  updateAppointmentStatus(id: number, status: string, notes?: string): Promise<Appointment>;
-
-  // Message
-  createMessage(message: InsertMessage): Promise<Message>;
-  getMessages(user1Id: number, user2Id: number): Promise<Message[]>;
-}
-
-export class DatabaseStorage implements IStorage {
-  // User
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+export class DatabaseStorage {
+  // ===== USER =====
+  async getUser(id: string) {
+    return User.findById(id).lean();
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+  async getUserByUsername(username: string) {
+    return User.findOne({ username }).lean();
   }
 
-  async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
-    return newUser;
+  async createUser(data: any) {
+    const user = await User.create(data);
+    return user.toObject();
   }
 
-  // Patient
-  async createPatient(patient: InsertPatient): Promise<Patient> {
-    const [newPatient] = await db.insert(patients).values(patient).returning();
-    return newPatient;
+  // ===== PATIENT =====
+  async createPatient(data: any) {
+    const patient = await Patient.create(data);
+    return patient.toObject();
   }
 
-  async getPatient(id: number): Promise<Patient | undefined> {
-    const [patient] = await db.select().from(patients).where(eq(patients.id, id));
-    return patient;
+  async getPatient(id: string) {
+    return Patient.findById(id).lean();
   }
 
-  async getPatientByUserId(userId: number): Promise<Patient | undefined> {
-    const [patient] = await db.select().from(patients).where(eq(patients.userId, userId));
-    return patient;
+  async getPatientByUserId(userId: string) {
+    return Patient.findOne({ userId }).lean();
   }
 
-  // Doctor
-  async createDoctor(doctor: InsertDoctor): Promise<Doctor> {
-    const [newDoctor] = await db.insert(doctors).values(doctor).returning();
-    return newDoctor;
+  // ===== DOCTOR =====
+  async createDoctor(data: any) {
+    const doctor = await Doctor.create(data);
+    return doctor.toObject();
   }
 
-  async getDoctor(id: number): Promise<Doctor | undefined> {
-    const [doctor] = await db.select().from(doctors).where(eq(doctors.id, id));
-    return doctor;
+  async getDoctor(id: string) {
+    return Doctor.findById(id).lean();
   }
 
-  async getDoctorByUserId(userId: number): Promise<Doctor | undefined> {
-    const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId));
-    return doctor;
+  async getDoctorByUserId(userId: string) {
+    return Doctor.findOne({ userId }).lean();
   }
 
-  async getAllDoctors(): Promise<Doctor[]> {
-    return await db.select().from(doctors);
+  async getAllDoctors() {
+    return Doctor.find().lean();
   }
 
-  // Appointment
-  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
-    return newAppointment;
+  // ===== APPOINTMENT =====
+  async createAppointment(data: any) {
+    const appointment = await Appointment.create(data);
+    return appointment.toObject();
   }
 
-  async getAppointment(id: number): Promise<Appointment | undefined> {
-    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
-    return appointment;
+  async getAppointmentsByPatient(patientId: string) {
+    return Appointment.find({ patientId })
+      .populate("doctorId")
+      .sort({ date: -1 })
+      .lean();
   }
 
-  async getAppointmentsByPatient(patientId: number): Promise<(Appointment & { doctor: Doctor })[]> {
-    // In a real app, use joins. For simplicity with Drizzle/TS inference here, I'll fetch and map or use query builder if setup.
-    // Let's use db.query if relations are set up, or manual join.
-    // Using manual join for clarity and type safety with basic drizzle usage.
-    const results = await db.select({
-      appointment: appointments,
-      doctor: doctors,
+  async getAppointmentsByDoctor(doctorId: string) {
+    return Appointment.find({ doctorId })
+      .populate("patientId")
+      .sort({ date: -1 })
+      .lean();
+  }
+
+  async updateAppointmentStatus(id: string, status: string, notes?: string) {
+    return Appointment.findByIdAndUpdate(
+      id,
+      { status, notes },
+      { new: true }
+    ).lean();
+  }
+
+  // ===== MESSAGE =====
+  async createMessage(data: any) {
+    const message = await Message.create(data);
+    return message.toObject();
+  }
+
+  async getMessages(user1Id: string, user2Id: string) {
+    return Message.find({
+      $or: [
+        { senderId: user1Id, receiverId: user2Id },
+        { senderId: user2Id, receiverId: user1Id },
+      ],
     })
-    .from(appointments)
-    .innerJoin(doctors, eq(appointments.doctorId, doctors.id))
-    .where(eq(appointments.patientId, patientId))
-    .orderBy(desc(appointments.date));
-
-    return results.map(r => ({ ...r.appointment, doctor: r.doctor }));
-  }
-
-  async getAppointmentsByDoctor(doctorId: number): Promise<(Appointment & { patient: Patient })[]> {
-    const results = await db.select({
-      appointment: appointments,
-      patient: patients,
-    })
-    .from(appointments)
-    .innerJoin(patients, eq(appointments.patientId, patients.id))
-    .where(eq(appointments.doctorId, doctorId))
-    .orderBy(desc(appointments.date));
-
-    return results.map(r => ({ ...r.appointment, patient: r.patient }));
-  }
-
-  async updateAppointmentStatus(id: number, status: string, notes?: string): Promise<Appointment> {
-    const [updated] = await db.update(appointments)
-      .set({ status, notes })
-      .where(eq(appointments.id, id))
-      .returning();
-    return updated;
-  }
-
-  // Message
-  async createMessage(message: InsertMessage): Promise<Message> {
-    const [newMessage] = await db.insert(messages).values(message).returning();
-    return newMessage;
-  }
-
-  async getMessages(user1Id: number, user2Id: number): Promise<Message[]> {
-    return await db.select()
-      .from(messages)
-      .where(
-        or(
-          and(eq(messages.senderId, user1Id), eq(messages.receiverId, user2Id)),
-          and(eq(messages.senderId, user2Id), eq(messages.receiverId, user1Id))
-        )
-      )
-      .orderBy(messages.createdAt);
+      .sort({ createdAt: 1 })
+      .lean();
   }
 }
 

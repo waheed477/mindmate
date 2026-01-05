@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+﻿import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
@@ -11,8 +11,8 @@ export function Footer() {
           Designed by <span className="text-primary">Waheed Aslam</span>
         </p>
         <div className="flex gap-4 text-sm text-muted-foreground">
-          <Link href="/privacy" className="hover:underline">Privacy</Link>
-          <Link href="/terms" className="hover:underline">Terms</Link>
+          <Link to="/privacy" className="hover:underline">Privacy</Link>
+          <Link to="/terms" className="hover:underline">Terms</Link>
         </div>
       </div>
     </footer>

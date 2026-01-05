@@ -1,5 +1,4 @@
-// src/pages/register.tsx - COMPLETE WORKING VERSION
-import { useForm } from "react-hook-form";
+﻿import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@hooks/use-auth";
@@ -26,14 +25,19 @@ import { Brain } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@components/ui/radio-group";
 import { useState } from "react";
 
+// Updated schema with email field
 const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Valid email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["patient", "doctor"]),
-  fullName: z.string().min(2, "Full name is required"),
-  age: z.coerce.number().optional(),
-  gender: z.string().optional(),
-  contactNumber: z.string().optional(),
+  
+  // Patient fields
+  fullName: z.string().min(2, "Full Name is required"),
+  age: z.coerce.number().min(18, "Must be at least 18"),
+  gender: z.string().min(1, "Gender is required"),
+  contactNumber: z.string().min(10, "Valid contact number required"),
+  
+  // Doctor specific
   specialization: z.string().optional(),
   licenseNumber: z.string().optional(),
   experience: z.coerce.number().optional(),
@@ -43,7 +47,7 @@ const registerSchema = z.object({
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function Register() {
-  const { register, isRegistering } = useAuth();
+  const { register: registerUser, isRegistering } = useAuth();
   const [role, setRole] = useState<"patient" | "doctor">("patient");
   const navigate = useNavigate();
 
@@ -54,44 +58,39 @@ export default function Register() {
       password: "",
       role: "patient",
       fullName: "",
-      age: undefined,
+      age: 18,
       gender: "",
       contactNumber: "",
+      // Doctor defaults
       specialization: "",
       licenseNumber: "",
-      experience: undefined,
-      consultationFee: undefined,
+      experience: 0,
+      consultationFee: 0,
     },
   });
 
   function onSubmit(data: RegisterForm) {
-    console.log("Form data:", data);
-
+    console.log("Register form data:", data);
+    
+    // Prepare payload matching use-auth.ts register function
     const payload = {
       email: data.email,
       password: data.password,
       name: data.fullName,
       role: data.role,
-      specialization: data.role === "doctor" ? data.specialization : undefined,
-      licenseNumber: data.role === "doctor" ? data.licenseNumber : undefined,
-      experience: data.role === "doctor" ? Number(data.experience) : undefined,
-      consultationFee: data.role === "doctor" ? Number(data.consultationFee) : undefined,
-      age: data.role === "patient" ? Number(data.age) : undefined,
-      gender: data.role === "patient" ? data.gender : undefined,
-      contactNumber: data.role === "patient" ? data.contactNumber : undefined,
+      age: data.age,
+      gender: data.gender,
+      contactNumber: data.contactNumber,
+      specialization: data.specialization,
+      licenseNumber: data.licenseNumber,
+      experience: data.experience,
+      consultationFee: data.consultationFee,
     };
 
-    console.log("Sending to backend:", payload);
-
-    register(payload)
-      .then(() => {
-        alert("✅ Registration successful!");
-        navigate("/login");
-      })
-      .catch((error) => {
-        console.error("Registration failed:", error);
-        alert(`Registration failed: ${error.message}`);
-      });
+    console.log("Sending to API:", payload);
+    
+    // Call register function
+    registerUser(payload);
   }
 
   return (
@@ -125,9 +124,9 @@ export default function Register() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address</FormLabel>
+                          <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="john@example.com" {...field} />
+                            <Input type="email" placeholder="you@example.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -337,3 +336,5 @@ export default function Register() {
     </div>
   );
 }
+
+

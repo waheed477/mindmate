@@ -5,31 +5,18 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { connectDB } from "./db";
 import { setupAuth } from "./auth";
-import appointmentRoutes from "./routes/appointments";
+
 const app = express();
 const httpServer = createServer(app);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use("/api/appointments", appointmentRoutes);
-// CORS Configuration - Fixed for frontend
+
+// CORS for frontend
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001"
-  ];
-  
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
   
@@ -60,12 +47,15 @@ app.use((req, res, next) => {
     const port = Number(process.env.PORT || 3000);
     httpServer.listen(port, "0.0.0.0", () => {
       console.log(`?? Server running on port ${port}`);
-      console.log("\n?? Available Endpoints:");
+      console.log("\n?? Auth Endpoints:");
       console.log("   POST   /api/auth/register      - Register user");
       console.log("   POST   /api/auth/login         - Login user");
-      console.log("   GET    /api/auth/me            - Get current user (Bearer token required)");
+      console.log("   GET    /api/auth/me            - Get current user");
       console.log("   POST   /api/auth/logout        - Logout");
-      console.log("\n?? Tip: Frontend should use http://localhost:3000");
+      console.log("\n?? Application Endpoints:");
+      console.log("   GET    /api/doctors            - Get all doctors");
+      console.log("   GET    /api/doctors/:id        - Get doctor by ID");
+      console.log("   GET    /api/appointments       - Get appointments");
     });
     
   } catch (error) {
