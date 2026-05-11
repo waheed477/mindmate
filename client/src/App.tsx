@@ -12,6 +12,7 @@ import Home from "@pages/home";
 import Login from "@pages/login";
 import Register from "@pages/register";
 import DoctorsList from "@pages/doctors-list";
+import DoctorProfile from "@pages/DoctorProfile";
 import PatientDashboard from "@pages/dashboard/patient";
 import DoctorDashboard from "@pages/dashboard/doctor";
 import Terms from "@pages/terms";
@@ -59,6 +60,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRole="patient">
                     <DoctorsList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/doctors/:id"
+                element={
+                  <ProtectedRoute allowedRole="patient">
+                    <DoctorProfile />
                   </ProtectedRoute>
                 }
               />

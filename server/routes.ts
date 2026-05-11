@@ -2,7 +2,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
-import { api, errorSchemas } from "@shared/routes";
+import { api, errorSchemas } from "../shared/routes.ts";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import appointmentRoutes from "./routes/appointments.js";
@@ -54,9 +54,56 @@ export async function registerRoutes(
   app.use("/api/appointments", appointmentRoutes);
 
   // Doctors
+  app.get(api.doctors.specializations.path, async (_req, res) => {
+    try {
+      const specializations = await storage.getDoctorSpecializations();
+      res.json({
+        success: true,
+        data: specializations
+      });
+    } catch (error) {
+      console.error("Get doctor specializations error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch doctor specializations"
+      });
+    }
+  });
   app.get(api.doctors.list.path, async (req, res) => {
     try {
-      const doctors = await storage.getAllDoctors();
+      const specialization =
+        typeof req.query.specialization === "string" ? req.query.specialization.trim() : undefined;
+      const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
+
+      const minFee =
+        typeof req.query.minFee === "string" && req.query.minFee.trim() !== ""
+          ? Number(req.query.minFee)
+          : undefined;
+      const maxFee =
+        typeof req.query.maxFee === "string" && req.query.maxFee.trim() !== ""
+          ? Number(req.query.maxFee)
+          : undefined;
+
+      if (typeof minFee === "number" && Number.isNaN(minFee)) {
+        return res.status(400).json({
+          success: false,
+          message: "minFee must be a valid number"
+        });
+      }
+
+      if (typeof maxFee === "number" && Number.isNaN(maxFee)) {
+        return res.status(400).json({
+          success: false,
+          message: "maxFee must be a valid number"
+        });
+      }
+
+      const doctors = await storage.getDoctors({
+        specialization: specialization || undefined,
+        search: search || undefined,
+        minFee,
+        maxFee
+      });
       res.json({
         success: true,
         data: doctors
@@ -72,7 +119,7 @@ export async function registerRoutes(
 
   app.get(api.doctors.get.path, async (req, res) => {
     try {
-      const doctor = await storage.getDoctor(Number(req.params.id));
+      const doctor = await storage.getDoctor(req.params.id);
       if (!doctor) {
         return res.status(404).json({ 
           success: false,

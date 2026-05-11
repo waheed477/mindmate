@@ -7,7 +7,39 @@ import { Patient } from "../models/Patient.js";  // ✅ .js
 // Create new appointment
 export const createAppointment = async (req: Request, res: Response) => {
   try {
-    const { doctorId, date, symptoms, healthCondition, type, duration } = req.body;
+    const {
+      doctorId,
+      date,
+      timeSlot,
+      reason,
+      appointmentDate,
+      appointmentTime,
+      symptoms,
+      healthCondition,
+      notes,
+      type,
+      duration,
+    } = req.body;
+
+    const normalizedDate = typeof date === "string" ? date : typeof appointmentDate === "string" ? appointmentDate : "";
+    const normalizedTimeSlot =
+      typeof timeSlot === "string" ? timeSlot : typeof appointmentTime === "string" ? appointmentTime : "";
+    const normalizedReason = typeof reason === "string" ? reason : typeof symptoms === "string" ? symptoms : "";
+
+    if (!doctorId || !normalizedDate || !normalizedTimeSlot || !normalizedReason) {
+      return res.status(400).json({
+        success: false,
+        message: "doctorId, date, timeSlot, and reason are required",
+      });
+    }
+
+    const appointmentDateTime = new Date(`${normalizedDate}T${normalizedTimeSlot}:00`);
+    if (Number.isNaN(appointmentDateTime.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date or timeSlot",
+      });
+    }
     
     // Get patient ID from authenticated user
     const patient = await Patient.findOne({ userId: req.user.id });
@@ -31,15 +63,19 @@ export const createAppointment = async (req: Request, res: Response) => {
     const appointment = await Appointment.create({
       patientId: patient._id,
       doctorId,
-      date: new Date(date),
-      symptoms,
-      healthCondition,
+      date: appointmentDateTime,
+      symptoms: normalizedReason,
+      healthCondition: typeof healthCondition === "string" ? healthCondition : undefined,
+      notes:
+        typeof notes === "string" && notes.trim().length > 0
+          ? `Preferred slot: ${normalizedTimeSlot}. ${notes.trim()}`
+          : `Preferred slot: ${normalizedTimeSlot}`,
       type: type || "online",
       duration: duration || 30,
       activityLog: [{
         action: "Appointment requested",
         performedBy: "patient",
-        details: `Request sent to Dr. ${doctor.fullName}`
+        details: `Request for ${normalizedDate} at ${normalizedTimeSlot} sent to Dr. ${doctor.fullName}`
       }]
     });
 

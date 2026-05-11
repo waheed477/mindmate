@@ -74,14 +74,14 @@ const AppointmentSchema = new mongoose.Schema(
 AppointmentSchema.virtual("patient", {
   ref: "Patient",
   localField: "patientId",
-  foreignField: "userId",
+  foreignField: "_id",
   justOne: true
 });
 
 AppointmentSchema.virtual("doctor", {
   ref: "Doctor",
   localField: "doctorId",
-  foreignField: "userId",
+  foreignField: "_id",
   justOne: true
 });
 

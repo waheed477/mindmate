@@ -9,6 +9,52 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "mindmate-secret-key-123";
 const JWT_EXPIRES_IN = "7d";
 
+const buildAuthUserPayload = async (user: any) => {
+  const authUser: any = {
+    id: String(user._id),
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    fullName: user.fullName
+  };
+
+  if (user.role === "doctor") {
+    const doctorProfile = await Doctor.findOne({ userId: user._id })
+      .select("_id fullName specialization verificationStatus consultationFee")
+      .lean();
+
+    if (doctorProfile) {
+      authUser.doctorProfileId = String(doctorProfile._id);
+      authUser.doctor = {
+        _id: String(doctorProfile._id),
+        fullName: doctorProfile.fullName,
+        specialization: doctorProfile.specialization,
+        verificationStatus: doctorProfile.verificationStatus,
+        consultationFee: doctorProfile.consultationFee
+      };
+    }
+  }
+
+  if (user.role === "patient") {
+    const patientProfile = await Patient.findOne({ userId: user._id })
+      .select("_id fullName age gender contactNumber")
+      .lean();
+
+    if (patientProfile) {
+      authUser.patientProfileId = String(patientProfile._id);
+      authUser.patient = {
+        _id: String(patientProfile._id),
+        fullName: patientProfile.fullName,
+        age: patientProfile.age,
+        gender: patientProfile.gender,
+        contactNumber: patientProfile.contactNumber
+      };
+    }
+  }
+
+  return authUser;
+};
+
 // Generate JWT Token
 const generateToken = (user: any) => {
   return jwt.sign(
@@ -136,18 +182,13 @@ router.post("/register", async (req: express.Request, res: express.Response) => 
     
     // Generate token
     const token = generateToken(user);
+    const authUser = await buildAuthUserPayload(user);
     
     res.status(201).json({
       success: true,
       message: "Registration successful",
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        fullName: user.fullName
-      }
+      user: authUser
     });
     
   } catch (error: any) {
@@ -195,18 +236,13 @@ router.post("/login", async (req: express.Request, res: express.Response) => {
     
     // Generate token
     const token = generateToken(user);
+    const authUser = await buildAuthUserPayload(user);
     
     res.json({
       success: true,
       message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        fullName: user.fullName
-      }
+      user: authUser
     });
     
   } catch (error: any) {
@@ -230,10 +266,11 @@ router.get("/me", authenticate, async (req: express.Request, res: express.Respon
         message: "User not found"
       });
     }
+    const authUser = await buildAuthUserPayload(user);
     
     res.json({
       success: true,
-      user
+      user: authUser
     });
     
   } catch (error: any) {

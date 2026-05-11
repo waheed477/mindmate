@@ -15,6 +15,8 @@ export interface Appointment {
     prescription?: string;
     rating?: number;
     review?: string;
+    timeSlot?: string;
+    reason?: string;
     activityLog: ActivityLog[];
     createdAt: string;
     updatedAt: string;
@@ -47,10 +49,8 @@ export interface Appointment {
   export interface CreateAppointmentData {
     doctorId: string;
     date: string;
-    symptoms: string;
-    healthCondition?: string;
-    type?: "online" | "in-person";
-    duration?: number;
+    timeSlot: string;
+    reason: string;
   }
   
   export interface UpdateAppointmentData {

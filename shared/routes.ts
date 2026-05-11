@@ -79,6 +79,13 @@ export const api = {
         200: z.array(z.custom<typeof doctors.$inferSelect>()),
       },
     },
+    specializations: {
+      method: 'GET' as const,
+      path: '/api/doctors/specializations',
+      responses: {
+        200: z.array(z.string()),
+      },
+    },
     get: {
       method: 'GET' as const,
       path: '/api/doctors/:id',

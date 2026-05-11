@@ -4,6 +4,15 @@ import { Appointment } from "./models/Appointment";
 import { User } from "./models/User";
 import { Message } from "./models/Message";
 
+interface DoctorFilters {
+  specialization?: string;
+  search?: string;
+  minFee?: number;
+  maxFee?: number;
+}
+
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export class DatabaseStorage {
   // ===== USER =====
   async getUser(id: string) {
@@ -40,7 +49,7 @@ export class DatabaseStorage {
   }
 
   async getDoctor(id: string) {
-    return Doctor.findById(id).lean();
+    return Doctor.findById(id).populate("userId", "email").lean();
   }
 
   async getDoctorByUserId(userId: string) {
@@ -48,7 +57,49 @@ export class DatabaseStorage {
   }
 
   async getAllDoctors() {
-    return Doctor.find().lean();
+    return Doctor.find().populate("userId", "email").lean();
+  }
+
+  async getDoctors(filters: DoctorFilters = {}) {
+    const query: Record<string, any> = {};
+
+    if (filters.specialization) {
+      query.specialization = {
+        $regex: `^${escapeRegex(filters.specialization)}$`,
+        $options: "i",
+      };
+    }
+
+    if (filters.search) {
+      const searchRegex = {
+        $regex: escapeRegex(filters.search),
+        $options: "i",
+      };
+      query.$or = [{ fullName: searchRegex }, { specialization: searchRegex }];
+    }
+
+    if (typeof filters.minFee === "number" || typeof filters.maxFee === "number") {
+      query.consultationFee = {};
+      if (typeof filters.minFee === "number") {
+        query.consultationFee.$gte = filters.minFee;
+      }
+      if (typeof filters.maxFee === "number") {
+        query.consultationFee.$lte = filters.maxFee;
+      }
+    }
+
+    return Doctor.find(query)
+      .populate("userId", "email")
+      .sort({ rating: -1, fullName: 1 })
+      .lean();
+  }
+
+  async getDoctorSpecializations() {
+    const specializations = (await Doctor.distinct("specialization", {
+      specialization: { $exists: true, $nin: [null, ""] },
+    })) as string[];
+
+    return specializations.sort((a, b) => a.localeCompare(b));
   }
 
   // ===== APPOINTMENT =====
