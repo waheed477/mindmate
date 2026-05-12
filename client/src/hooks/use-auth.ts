@@ -9,7 +9,7 @@ interface User {
   fullName: string;
 }
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);

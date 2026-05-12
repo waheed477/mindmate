@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = "/api";
 
 // Get appointments for current user
 export const useAppointments = () => {
