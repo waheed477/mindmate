@@ -5,71 +5,53 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { connectDB } from "./db";
 import { setupAuth } from "./auth";
+import { setupSocket } from "./socket";
 import appointmentRoutes from "./routes/appointments";
+import messageRoutes from "./routes/messages";
+
 const app = express();
 const httpServer = createServer(app);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use("/api/appointments", appointmentRoutes);
-// CORS Configuration - Fixed for frontend
+
+// CORS — allow all origins (Replit proxy + local dev)
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001"
-  ];
-  
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
-  
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  
+  if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 
+// API Routes
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/messages", messageRoutes);
+
 (async () => {
   try {
-    // Connect to MongoDB
     await connectDB();
-    
-    // Setup authentication routes
+
     setupAuth(app);
-    
-    // Register other routes
     await registerRoutes(httpServer, app);
-    
-    // Serve static files in production
+
+    // Socket.io — must be after HTTP server is created
+    setupSocket(httpServer);
+
     if (process.env.NODE_ENV === "production") {
       serveStatic(app);
     }
-    
-    // Start server
+
     const port = Number(process.env.PORT || 3000);
     httpServer.listen(port, "0.0.0.0", () => {
-      console.log(`?? Server running on port ${port}`);
-      console.log("\n?? Available Endpoints:");
-      console.log("   POST   /api/auth/register      - Register user");
-      console.log("   POST   /api/auth/login         - Login user");
-      console.log("   GET    /api/auth/me            - Get current user (Bearer token required)");
-      console.log("   POST   /api/auth/logout        - Logout");
-      console.log("\n?? Tip: Frontend should use http://localhost:3000");
+      console.log(`🚀 Server running on port ${port}`);
+      console.log("🔌 Socket.io enabled");
     });
-    
+
   } catch (error) {
-    console.error("? Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 })();

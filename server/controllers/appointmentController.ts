@@ -81,8 +81,8 @@ export const createAppointment = async (req: Request, res: Response) => {
 
     // Populate doctor and patient details
     const populatedAppointment = await Appointment.findById(appointment._id)
-      .populate("doctor", "fullName specialization consultationFee verificationStatus")
-      .populate("patient", "fullName age gender contactNumber");
+      .populate("doctor", "fullName specialization consultationFee verificationStatus userId")
+      .populate("patient", "fullName age gender contactNumber userId");
 
     res.status(201).json({
       success: true,
@@ -133,8 +133,8 @@ export const getAppointments = async (req: Request, res: Response) => {
     }
 
     const appointments = await Appointment.find(query)
-      .populate("doctor", "fullName specialization consultationFee verificationStatus")
-      .populate("patient", "fullName age gender contactNumber")
+      .populate("doctor", "fullName specialization consultationFee verificationStatus userId")
+      .populate("patient", "fullName age gender contactNumber userId")
       .sort({ date: -1, createdAt: -1 });
 
     res.json({
@@ -163,7 +163,7 @@ export const getDoctorAppointments = async (req: Request, res: Response) => {
     if (status) query.status = status;
 
     const appointments = await Appointment.find(query)
-      .populate("patient", "fullName age gender contactNumber")
+      .populate("patient", "fullName age gender contactNumber userId")
       .sort({ date: 1 });
 
     res.json({
@@ -213,8 +213,8 @@ export const getPatientAppointments = async (req: Request, res: Response) => {
 export const getAppointmentById = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate("doctor", "fullName specialization consultationFee verificationStatus")
-      .populate("patient", "fullName age gender contactNumber");
+      .populate("doctor", "fullName specialization consultationFee verificationStatus userId")
+      .populate("patient", "fullName age gender contactNumber userId");
 
     if (!appointment) {
       return res.status(404).json({
@@ -287,8 +287,8 @@ export const updateAppointment = async (req: Request, res: Response) => {
       updates,
       { new: true, runValidators: true }
     )
-      .populate("doctor", "fullName specialization consultationFee verificationStatus")
-      .populate("patient", "fullName age gender contactNumber");
+      .populate("doctor", "fullName specialization consultationFee verificationStatus userId")
+      .populate("patient", "fullName age gender contactNumber userId");
 
     res.json({
       success: true,

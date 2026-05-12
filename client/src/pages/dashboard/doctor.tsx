@@ -18,7 +18,7 @@ import {
   AlertCircle,
   Bell,
   Users,
-  ExternalLink,
+  Send,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import {
@@ -178,6 +178,11 @@ export default function DoctorDashboard() {
                   appointment={appointment}
                   onAccept={() => openActionDialog(appointment, "accept")}
                   onReject={() => openActionDialog(appointment, "reject")}
+                  onMessage={() => {
+                    const uid = appointment.patient?.userId;
+                    const receiverId = typeof uid === "object" ? uid?._id : String(uid ?? "");
+                    if (receiverId) navigate(`/chat/${receiverId}`);
+                  }}
                 />
               ))
             )}
@@ -198,6 +203,11 @@ export default function DoctorDashboard() {
                   key={appointment._id}
                   appointment={appointment}
                   onComplete={() => openActionDialog(appointment, "complete")}
+                  onMessage={() => {
+                    const uid = appointment.patient?.userId;
+                    const receiverId = typeof uid === "object" ? uid?._id : String(uid ?? "");
+                    if (receiverId) navigate(`/chat/${receiverId}`);
+                  }}
                 />
               ))
             )}
@@ -342,10 +352,12 @@ function RequestCard({
   appointment,
   onAccept,
   onReject,
+  onMessage,
 }: {
   appointment: any;
   onAccept: () => void;
   onReject: () => void;
+  onMessage?: () => void;
 }) {
   return (
     <Card className="border-l-4 border-l-yellow-400">
@@ -406,6 +418,12 @@ function RequestCard({
               <XCircle className="h-4 w-4" />
               Reject
             </Button>
+            {onMessage && (
+              <Button variant="outline" onClick={onMessage} className="gap-2">
+                <Send className="h-4 w-4" />
+                Message
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
@@ -416,9 +434,11 @@ function RequestCard({
 function UpcomingCard({
   appointment,
   onComplete,
+  onMessage,
 }: {
   appointment: any;
   onComplete: () => void;
+  onMessage?: () => void;
 }) {
   return (
     <Card className="border-l-4 border-l-blue-400">
@@ -464,10 +484,12 @@ function UpcomingCard({
           </div>
 
           <div className="flex flex-col gap-2 shrink-0">
-            <Button className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Start Consultation
-            </Button>
+            {onMessage && (
+              <Button onClick={onMessage} className="gap-2">
+                <Send className="h-4 w-4" />
+                Message Patient
+              </Button>
+            )}
             <Button variant="outline" onClick={onComplete} className="gap-2">
               <CheckCircle2 className="h-4 w-4" />
               Mark Complete

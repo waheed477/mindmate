@@ -32,6 +32,7 @@ import {
   CheckCircle2,
   XCircle,
   ExternalLink,
+  Send,
 } from "lucide-react";
 import { format, parseISO, isAfter, isBefore } from "date-fns";
 import {
@@ -279,6 +280,11 @@ export default function PatientDashboard() {
                         const docId = appointment.doctorId || appointment.doctor?._id;
                         if (docId) navigate(`/doctors/${docId}`);
                       }}
+                      onMessage={() => {
+                        const uid = appointment.doctor?.userId;
+                        const receiverId = typeof uid === "object" ? uid?._id : uid;
+                        if (receiverId) navigate(`/chat/${receiverId}`);
+                      }}
                       onCancel={() => handleCancelAppointment(appointment._id)}
                       isUpcoming
                     />
@@ -302,6 +308,11 @@ export default function PatientDashboard() {
                       onViewDetails={() => {
                         const docId = appointment.doctorId || appointment.doctor?._id;
                         if (docId) navigate(`/doctors/${docId}`);
+                      }}
+                      onMessage={() => {
+                        const uid = appointment.doctor?.userId;
+                        const receiverId = typeof uid === "object" ? uid?._id : uid;
+                        if (receiverId) navigate(`/chat/${receiverId}`);
                       }}
                       onCancel={() => handleCancelAppointment(appointment._id)}
                     />
@@ -412,12 +423,14 @@ function AppointmentCard({
   appointment,
   onViewDetails,
   onCancel,
+  onMessage,
   isUpcoming = false,
   isPast = false,
 }: {
   appointment: any;
   onViewDetails: () => void;
   onCancel?: () => void;
+  onMessage?: () => void;
   isUpcoming?: boolean;
   isPast?: boolean;
 }) {
@@ -497,10 +510,10 @@ function AppointmentCard({
               View Doctor
             </Button>
 
-            {isUpcoming && appointment.status === "accepted" && (
-              <Button className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Join Consultation
+            {onMessage && (
+              <Button onClick={onMessage} variant="outline" className="gap-2 whitespace-nowrap">
+                <Send className="h-4 w-4" />
+                Message
               </Button>
             )}
 

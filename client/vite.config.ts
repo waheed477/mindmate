@@ -35,6 +35,11 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
       },
+      "/socket.io": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
   build: {
@@ -51,7 +56,8 @@ export default defineConfig({
       "react-router-dom",
       "react-hook-form",
       "@hookform/resolvers",
-      "zod"
+      "zod",
+      "socket.io-client",
     ],
     force: true,
   },

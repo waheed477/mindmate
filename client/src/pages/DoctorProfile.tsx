@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, Clock3, IndianRupee, Loader2, Stethoscope, User } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, BadgeCheck, CalendarDays, Clock3, IndianRupee, Loader2, MessageSquare, Stethoscope, User } from "lucide-react";
 import { Navbar } from "@/components/layout-navbar";
 import { AppointmentRequestDialog } from "@/components/appointment-request-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -61,11 +61,18 @@ const getAvailabilityRows = (doctor: Doctor) => {
 
 export default function DoctorProfile() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const doctorId = id ?? "";
   const { data: doctor, isLoading, isError } = useDoctor(doctorId);
   const { mutate: createAppointment, isPending: isCreating } = useCreateAppointment();
 
   const [bookingOpen, setBookingOpen] = useState(false);
+
+  const getDoctorUserId = () => {
+    if (!doctor?.userId) return null;
+    if (typeof doctor.userId === "string") return doctor.userId;
+    return (doctor.userId as any)._id ?? null;
+  };
 
   const qualification = useMemo(() => {
     if (!doctor) return "Not provided";
@@ -164,10 +171,22 @@ export default function DoctorProfile() {
                 <CardDescription className="text-base">{doctor.specialization}</CardDescription>
               </div>
 
-              <Button className="w-full md:w-auto" onClick={() => setBookingOpen(true)}>
-                <CalendarDays className="mr-2 h-4 w-4" />
-                Book Appointment
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                {getDoctorUserId() && (
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => navigate(`/chat/${getDoctorUserId()}`)}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Message
+                  </Button>
+                )}
+                <Button className="gap-2" onClick={() => setBookingOpen(true)}>
+                  <CalendarDays className="h-4 w-4" />
+                  Book Appointment
+                </Button>
+              </div>
             </div>
           </CardHeader>
 

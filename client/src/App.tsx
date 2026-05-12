@@ -15,6 +15,7 @@ import DoctorsList from "@pages/doctors-list";
 import DoctorProfile from "@pages/DoctorProfile";
 import PatientDashboard from "@pages/dashboard/patient";
 import DoctorDashboard from "@pages/dashboard/doctor";
+import ChatPage from "@pages/Chat";
 import Terms from "@pages/terms";
 import Privacy from "@pages/privacy";
 
@@ -89,7 +90,17 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
+
+              {/* Chat — accessible to both roles */}
+              <Route
+                path="/chat/:receiverId"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
