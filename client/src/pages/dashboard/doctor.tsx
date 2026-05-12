@@ -1,13 +1,13 @@
-// src/pages/dashboard/doctor.tsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useDoctorAppointments, useUpdateAppointment } from "@/hooks/use-appointments";
 import { Navbar } from "@/components/layout-navbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Calendar,
   Clock,
@@ -18,9 +18,9 @@ import {
   AlertCircle,
   Bell,
   Users,
-  Activity,
+  ExternalLink,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -30,56 +30,62 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
 export default function DoctorDashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: appointments = [], isLoading } = useDoctorAppointments(user?.doctor?._id || user?.id);
-  const { mutate: updateAppointment } = useUpdateAppointment();
-  
+
+  // Use the doctor profile ID from auth; fall back to user id
+  const doctorProfileId: string =
+    (user as any)?.doctorProfileId ||
+    (user as any)?.doctor?._id ||
+    (user as any)?.id ||
+    "";
+
+  const { data: appointments = [], isLoading } = useDoctorAppointments(doctorProfileId);
+  const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment();
+
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [action, setAction] = useState<"accept" | "reject" | "complete" | null>(null);
   const [doctorNotes, setDoctorNotes] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
 
-  // Filter appointments
-  const filteredAppointments = appointments.filter((app: any) => {
-    if (filterStatus === "all") return true;
-    return app.status === filterStatus;
-  });
+  const pendingAppointments = appointments.filter((a: any) => a.status === "pending");
+  const upcomingAppointments = appointments.filter((a: any) => a.status === "accepted");
+  const completedAppointments = appointments.filter((a: any) => a.status === "completed");
 
-  const pendingAppointments = appointments.filter((app: any) => app.status === "pending");
-  const upcomingAppointments = appointments.filter((app: any) => app.status === "accepted");
-  const completedAppointments = appointments.filter((app: any) => app.status === "completed");
+  const openActionDialog = (app: any, actionType: "accept" | "reject" | "complete") => {
+    setSelectedAppointment(app);
+    setAction(actionType);
+    setDoctorNotes("");
+  };
 
-  const handleAction = () => {
-    if (!selectedAppointment || !action) return;
-
-    let newStatus = "";
-    switch (action) {
-      case "accept":
-        newStatus = "accepted";
-        break;
-      case "reject":
-        newStatus = "rejected";
-        break;
-      case "complete":
-        newStatus = "completed";
-        break;
-    }
-
-    updateAppointment({
-      id: selectedAppointment._id,
-      status: newStatus,
-      notes: doctorNotes || undefined,
-    });
-
-    // Reset
+  const closeDialog = () => {
     setSelectedAppointment(null);
     setAction(null);
     setDoctorNotes("");
+  };
+
+  const handleConfirmAction = () => {
+    if (!selectedAppointment || !action) return;
+
+    const statusMap = {
+      accept: "accepted",
+      reject: "rejected",
+      complete: "completed",
+    } as const;
+
+    updateAppointment(
+      {
+        id: selectedAppointment._id,
+        status: statusMap[action],
+        ...(doctorNotes.trim() && { doctorNotes: doctorNotes.trim() }),
+      },
+      {
+        onSuccess: () => closeDialog(),
+        onError: (err) => alert(`Failed: ${err.message}`),
+      }
+    );
   };
 
   if (isLoading) {
@@ -87,7 +93,10 @@ export default function DoctorDashboard() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container py-8 flex items-center justify-center">
-          <div className="text-center">Loading appointments...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+            <p className="mt-4 text-muted-foreground">Loading appointments...</p>
+          </div>
         </div>
       </div>
     );
@@ -100,10 +109,10 @@ export default function DoctorDashboard() {
         {/* Header */}
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold font-display tracking-tight">
-              Dr. {user?.doctor?.fullName || user?.fullName}
+            <h1 className="text-3xl font-bold tracking-tight">
+              Dr. {(user as any)?.doctor?.fullName || user?.fullName}
             </h1>
-            {user?.doctor?.verificationStatus === "verified" && (
+            {(user as any)?.doctor?.verificationStatus === "verified" && (
               <Badge className="bg-green-500/10 text-green-600 border-green-200">
                 ✓ Verified
               </Badge>
@@ -137,13 +146,13 @@ export default function DoctorDashboard() {
           <StatCard
             icon={<Users className="h-5 w-5" />}
             label="Total Patients"
-            value={new Set(appointments.map((a: any) => a.patientId)).size}
+            value={new Set(appointments.map((a: any) => String(a.patientId))).size}
             color="purple"
           />
         </div>
 
         <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-3 lg:w-[420px]">
             <TabsTrigger value="requests">
               Requests ({pendingAppointments.length})
             </TabsTrigger>
@@ -151,10 +160,9 @@ export default function DoctorDashboard() {
               Upcoming ({upcomingAppointments.length})
             </TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="all">All Appointments</TabsTrigger>
           </TabsList>
 
-          {/* Pending Requests Tab */}
+          {/* Pending Requests */}
           <TabsContent value="requests" className="space-y-4 mt-6">
             {pendingAppointments.length === 0 ? (
               <Card>
@@ -165,19 +173,17 @@ export default function DoctorDashboard() {
               </Card>
             ) : (
               pendingAppointments.map((appointment: any) => (
-                <AppointmentRequestCard
+                <RequestCard
                   key={appointment._id}
                   appointment={appointment}
-                  onAction={(app, actionType) => {
-                    setSelectedAppointment(app);
-                    setAction(actionType);
-                  }}
+                  onAccept={() => openActionDialog(appointment, "accept")}
+                  onReject={() => openActionDialog(appointment, "reject")}
                 />
               ))
             )}
           </TabsContent>
 
-          {/* Upcoming Appointments Tab */}
+          {/* Upcoming Appointments */}
           <TabsContent value="upcoming" className="space-y-4 mt-6">
             {upcomingAppointments.length === 0 ? (
               <Card>
@@ -188,86 +194,54 @@ export default function DoctorDashboard() {
               </Card>
             ) : (
               upcomingAppointments.map((appointment: any) => (
-                <UpcomingAppointmentCard
+                <UpcomingCard
                   key={appointment._id}
                   appointment={appointment}
-                  onComplete={() => {
-                    setSelectedAppointment(appointment);
-                    setAction("complete");
-                  }}
+                  onComplete={() => openActionDialog(appointment, "complete")}
                 />
               ))
             )}
           </TabsContent>
 
-          {/* Completed Appointments Tab */}
+          {/* Completed */}
           <TabsContent value="completed" className="space-y-4 mt-6">
             {completedAppointments.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">No completed appointments</p>
+                  <p className="text-muted-foreground">No completed appointments yet</p>
                 </CardContent>
               </Card>
             ) : (
               completedAppointments.map((appointment: any) => (
-                <CompletedAppointmentCard key={appointment._id} appointment={appointment} />
+                <CompletedCard key={appointment._id} appointment={appointment} />
               ))
             )}
-          </TabsContent>
-
-          {/* All Appointments Tab */}
-          <TabsContent value="all" className="space-y-4 mt-6">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="filter">Filter by:</Label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="accepted">Accepted</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button variant="outline" size="sm">
-                Export
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {filteredAppointments.map((appointment: any) => (
-                <AppointmentCard key={appointment._id} appointment={appointment} />
-              ))}
-            </div>
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Action Dialog */}
-      <Dialog open={selectedAppointment !== null} onOpenChange={(open) => !open && setSelectedAppointment(null)}>
+      <Dialog open={!!selectedAppointment} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {action === "accept" && "Accept Appointment Request"}
-              {action === "reject" && "Reject Appointment Request"}
+              {action === "accept" && "Accept Appointment"}
+              {action === "reject" && "Reject Appointment"}
               {action === "complete" && "Complete Appointment"}
             </DialogTitle>
             <DialogDescription>
-              {selectedAppointment?.patient?.fullName} -{" "}
-              {format(new Date(selectedAppointment?.date || new Date()), "PPP p")}
+              Patient: {selectedAppointment?.patient?.fullName} —{" "}
+              {selectedAppointment?.date
+                ? format(parseISO(selectedAppointment.date), "PPP 'at' p")
+                : ""}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             {selectedAppointment?.symptoms && (
               <div>
-                <h4 className="font-medium mb-2">Patient's Symptoms:</h4>
+                <p className="text-sm font-medium mb-1">Patient's Reason:</p>
                 <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
                   {selectedAppointment.symptoms}
                 </p>
@@ -275,54 +249,54 @@ export default function DoctorDashboard() {
             )}
 
             <div>
-              <Label htmlFor="doctor-notes">Doctor's Notes {action === "reject" && "(Required)"}</Label>
+              <Label htmlFor="doctor-notes">
+                Doctor's Notes {action === "reject" ? "(Required)" : "(Optional)"}
+              </Label>
               <Textarea
                 id="doctor-notes"
+                className="mt-2 min-h-[100px]"
                 placeholder={
                   action === "accept"
-                    ? "Add consultation notes or instructions for the patient..."
+                    ? "Instructions or notes for the patient..."
                     : action === "reject"
-                    ? "Please provide reason for rejection..."
-                    : "Add consultation summary and recommendations..."
+                    ? "Please provide a reason for rejection..."
+                    : "Consultation summary and recommendations..."
                 }
                 value={doctorNotes}
                 onChange={(e) => setDoctorNotes(e.target.value)}
-                className="min-h-[120px] mt-2"
-                required={action === "reject"}
               />
             </div>
 
             {action === "accept" && (
-              <div className="p-3 bg-blue-50 rounded-md">
-                <p className="text-sm text-blue-700">
-                  <AlertCircle className="h-4 w-4 inline mr-1" />
-                  The patient will be notified of your acceptance and the appointment will be scheduled.
-                </p>
+              <div className="p-3 bg-blue-50 rounded-md text-sm text-blue-700 flex gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                The patient will be notified that their appointment has been accepted.
               </div>
             )}
-
             {action === "reject" && (
-              <div className="p-3 bg-yellow-50 rounded-md">
-                <p className="text-sm text-yellow-700">
-                  <AlertCircle className="h-4 w-4 inline mr-1" />
-                  Please provide a constructive reason for rejection. The patient will be notified.
-                </p>
+              <div className="p-3 bg-yellow-50 rounded-md text-sm text-yellow-700 flex gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                Please provide a reason so the patient can follow up appropriately.
               </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedAppointment(null)}>
+            <Button variant="outline" onClick={closeDialog} disabled={isUpdating}>
               Cancel
             </Button>
             <Button
-              onClick={handleAction}
-              disabled={action === "reject" && !doctorNotes.trim()}
+              onClick={handleConfirmAction}
+              disabled={isUpdating || (action === "reject" && !doctorNotes.trim())}
               variant={action === "reject" ? "destructive" : "default"}
             >
-              {action === "accept" && "Accept Appointment"}
-              {action === "reject" && "Reject Appointment"}
-              {action === "complete" && "Mark as Complete"}
+              {isUpdating
+                ? "Saving..."
+                : action === "accept"
+                ? "Accept Appointment"
+                : action === "reject"
+                ? "Reject Appointment"
+                : "Mark as Complete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -331,20 +305,23 @@ export default function DoctorDashboard() {
   );
 }
 
-// StatCard Component
-function StatCard({ icon, label, value, color }: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: number | string; 
+function StatCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
   color: string;
 }) {
-  const colorClasses = {
-    blue: "bg-blue-500/10 text-blue-600 border-blue-200",
-    yellow: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
-    green: "bg-green-500/10 text-green-600 border-green-200",
-    purple: "bg-purple-500/10 text-purple-600 border-purple-200",
-    red: "bg-red-500/10 text-red-600 border-red-200",
-  }[color];
+  const colorClasses: Record<string, string> = {
+    blue: "bg-blue-500/10 text-blue-600",
+    yellow: "bg-yellow-500/10 text-yellow-600",
+    green: "bg-green-500/10 text-green-600",
+    purple: "bg-purple-500/10 text-purple-600",
+  };
 
   return (
     <Card>
@@ -354,22 +331,24 @@ function StatCard({ icon, label, value, color }: {
             <p className="text-sm font-medium text-muted-foreground">{label}</p>
             <p className="text-3xl font-bold mt-2">{value}</p>
           </div>
-          <div className={`p-3 rounded-full ${colorClasses}`}>
-            {icon}
-          </div>
+          <div className={`p-3 rounded-full ${colorClasses[color]}`}>{icon}</div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// AppointmentRequestCard Component
-function AppointmentRequestCard({ appointment, onAction }: { 
-  appointment: any; 
-  onAction: (app: any, action: "accept" | "reject") => void;
+function RequestCard({
+  appointment,
+  onAccept,
+  onReject,
+}: {
+  appointment: any;
+  onAccept: () => void;
+  onReject: () => void;
 }) {
   return (
-    <Card>
+    <Card className="border-l-4 border-l-yellow-400">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1">
@@ -378,50 +357,54 @@ function AppointmentRequestCard({ appointment, onAction }: {
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold">{appointment.patient?.fullName}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {format(new Date(appointment.date), "PPP 'at' p")}
-                </p>
+                <h3 className="font-semibold text-lg">
+                  {appointment.patient?.fullName || "Patient"}
+                </h3>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {format(parseISO(appointment.date), "PPP")}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {format(parseISO(appointment.date), "p")}
+                  </span>
+                </div>
               </div>
             </div>
-            
+
+            {appointment.patient && (
+              <div className="flex gap-4 text-sm text-muted-foreground mb-3">
+                {appointment.patient.age && (
+                  <span>Age: {appointment.patient.age}</span>
+                )}
+                {appointment.patient.gender && (
+                  <span>Gender: {appointment.patient.gender}</span>
+                )}
+                {appointment.patient.contactNumber && (
+                  <span>Contact: {appointment.patient.contactNumber}</span>
+                )}
+              </div>
+            )}
+
             {appointment.symptoms && (
-              <div className="mt-3 p-3 bg-muted rounded-md">
-                <p className="text-sm font-medium">Symptoms:</p>
-                <p className="text-sm text-muted-foreground line-clamp-2">
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm font-medium">Reason:</p>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
                   {appointment.symptoms}
                 </p>
               </div>
             )}
-            
-            {appointment.healthCondition && (
-              <div className="mt-2">
-                <Badge variant="outline" className="mt-2">
-                  {appointment.healthCondition}
-                </Badge>
-              </div>
-            )}
           </div>
-          
-          <div className="flex flex-col gap-2">
-            <Button 
-              onClick={() => onAction(appointment, "accept")}
-              className="gap-2"
-            >
+
+          <div className="flex flex-col gap-2 shrink-0">
+            <Button onClick={onAccept} className="gap-2">
               <CheckCircle2 className="h-4 w-4" />
               Accept
             </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => onAction(appointment, "reject")}
-              className="gap-2"
-            >
+            <Button variant="destructive" onClick={onReject} className="gap-2">
               <XCircle className="h-4 w-4" />
               Reject
-            </Button>
-            <Button variant="outline" size="sm">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Message
             </Button>
           </div>
         </div>
@@ -430,61 +413,64 @@ function AppointmentRequestCard({ appointment, onAction }: {
   );
 }
 
-// UpcomingAppointmentCard Component
-function UpcomingAppointmentCard({ appointment, onComplete }: { 
-  appointment: any; 
+function UpcomingCard({
+  appointment,
+  onComplete,
+}: {
+  appointment: any;
   onComplete: () => void;
 }) {
   return (
-    <Card>
+    <Card className="border-l-4 border-l-blue-400">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">{appointment.patient?.fullName}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(appointment.date), "PPP 'at' p")}
-                    </span>
-                  </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-blue-500/10 rounded-full">
+                <User className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">
+                  {appointment.patient?.fullName || "Patient"}
+                </h3>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {format(parseISO(appointment.date), "PPP")}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {format(parseISO(appointment.date), "p")}
+                  </span>
                 </div>
               </div>
-              <Badge className="bg-blue-500/10 text-blue-600 border-blue-200">
-                Upcoming
-              </Badge>
             </div>
-            
+
             {appointment.symptoms && (
-              <div className="mt-3 p-3 bg-muted rounded-md">
-                <p className="text-sm font-medium">Symptoms:</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm font-medium">Reason:</p>
+                <p className="text-sm text-muted-foreground mt-1">
                   {appointment.symptoms}
                 </p>
               </div>
             )}
+
+            {appointment.doctorNotes && (
+              <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm font-medium text-blue-800">Your Notes:</p>
+                <p className="text-sm text-blue-700">{appointment.doctorNotes}</p>
+              </div>
+            )}
           </div>
-          
-          <div className="flex flex-col gap-2">
+
+          <div className="flex flex-col gap-2 shrink-0">
             <Button className="gap-2">
               <MessageSquare className="h-4 w-4" />
               Start Consultation
             </Button>
-            <Button 
-              onClick={onComplete}
-              variant="outline"
-              className="gap-2"
-            >
+            <Button variant="outline" onClick={onComplete} className="gap-2">
               <CheckCircle2 className="h-4 w-4" />
               Mark Complete
-            </Button>
-            <Button variant="outline" size="sm">
-              Reschedule
             </Button>
           </div>
         </div>
@@ -493,8 +479,7 @@ function UpcomingAppointmentCard({ appointment, onComplete }: {
   );
 }
 
-// CompletedAppointmentCard Component
-function CompletedAppointmentCard({ appointment }: { appointment: any }) {
+function CompletedCard({ appointment }: { appointment: any }) {
   return (
     <Card>
       <CardContent className="p-6">
@@ -504,82 +489,32 @@ function CompletedAppointmentCard({ appointment }: { appointment: any }) {
               <User className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <h3 className="font-semibold">{appointment.patient?.fullName}</h3>
+              <h3 className="font-semibold">
+                {appointment.patient?.fullName || "Patient"}
+              </h3>
               <p className="text-sm text-muted-foreground">
-                {format(new Date(appointment.date), "PPP")}
+                {format(parseISO(appointment.date), "PPP 'at' p")}
               </p>
             </div>
           </div>
-          <Badge className="bg-green-500/10 text-green-600 border-green-200">
-            Completed
-          </Badge>
+          <Badge className="bg-green-500/10 text-green-600 border-green-200">Completed</Badge>
         </div>
-        
+
         {appointment.symptoms && (
-          <div className="mt-3">
-            <p className="text-sm font-medium">Symptoms:</p>
+          <div className="mt-3 p-3 bg-muted rounded-md">
+            <p className="text-sm font-medium">Reason:</p>
             <p className="text-sm text-muted-foreground line-clamp-2">
               {appointment.symptoms}
             </p>
           </div>
         )}
-        
+
         {appointment.doctorNotes && (
-          <div className="mt-3 p-3 bg-blue-50 rounded-md">
+          <div className="mt-2 p-3 bg-blue-50 rounded-md">
             <p className="text-sm font-medium text-blue-800">Your Notes:</p>
-            <p className="text-sm text-blue-700">
-              {appointment.doctorNotes}
-            </p>
+            <p className="text-sm text-blue-700">{appointment.doctorNotes}</p>
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// AppointmentCard Component (for All Appointments tab)
-function AppointmentCard({ appointment }: { appointment: any }) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-500/10 text-yellow-600 border-yellow-200";
-      case "accepted":
-        return "bg-blue-500/10 text-blue-600 border-blue-200";
-      case "completed":
-        return "bg-green-500/10 text-green-600 border-green-200";
-      case "rejected":
-        return "bg-red-500/10 text-red-600 border-red-200";
-      case "cancelled":
-        return "bg-gray-500/10 text-gray-600 border-gray-200";
-      default:
-        return "bg-gray-500/10 text-gray-600 border-gray-200";
-    }
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold">{appointment.patient?.fullName}</h4>
-              <Badge className={`${getStatusColor(appointment.status)}`}>
-                {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(appointment.date), "PPP 'at' p")}
-            </p>
-            {appointment.symptoms && (
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-1">
-                {appointment.symptoms}
-              </p>
-            )}
-          </div>
-          <Button variant="outline" size="sm">
-            View Details
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

@@ -92,7 +92,7 @@ AppointmentSchema.index({ date: 1 });
 AppointmentSchema.index({ status: 1 });
 
 // Pre-save middleware to add activity log
-AppointmentSchema.pre("save", function(next) {
+AppointmentSchema.pre("save", function() {
   if (this.isModified("status")) {
     if (!this.activityLog) {
       this.activityLog = [];
@@ -112,7 +112,6 @@ AppointmentSchema.pre("save", function(next) {
       details: this.doctorNotes || `Appointment ${this.status}`
     });
   }
-  next();
 });
 
 export const Appointment = mongoose.model("Appointment", AppointmentSchema);

@@ -1,15 +1,15 @@
-﻿import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  User,
   Star,
   Clock,
   MessageSquare,
-  MapPin,
   Award,
   ChevronRight,
+  IndianRupee,
 } from "lucide-react";
 
 interface Doctor {
@@ -22,7 +22,7 @@ interface Doctor {
   experience?: number;
   location?: string;
   avatar?: string;
-  availability?: string[];
+  verificationStatus?: string;
 }
 
 interface DoctorCardProps {
@@ -31,89 +31,84 @@ interface DoctorCardProps {
   onViewDetails: () => void;
 }
 
-export function DoctorCard({ doctor, onBookAppointment, onViewDetails }: DoctorCardProps) {
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
+export function DoctorCard({ doctor, onBookAppointment, onViewDetails }: DoctorCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
+            <Avatar className="h-12 w-12 shrink-0">
               <AvatarImage src={doctor.avatar} />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                 {getInitials(doctor.fullName)}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <CardTitle className="text-lg">{doctor.fullName}</CardTitle>
-              <p className="text-sm text-muted-foreground">{doctor.specialization}</p>
+            <div className="min-w-0">
+              <CardTitle className="text-base leading-tight">{doctor.fullName}</CardTitle>
+              <p className="text-sm text-muted-foreground truncate">{doctor.specialization}</p>
             </div>
           </div>
-          <Badge variant="outline" className="gap-1">
-            <Star className="h-3 w-3" />
-            {doctor.rating || "4.5"}
-          </Badge>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Badge variant="outline" className="gap-1 text-xs">
+              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+              {doctor.rating || "4.5"}
+            </Badge>
+            {doctor.verificationStatus === "verified" && (
+              <Badge className="bg-green-500/10 text-green-700 border-green-300 text-xs">
+                Verified
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
-      
-      <CardContent className="pb-3">
+
+      <CardContent className="pb-3 flex-1">
         {doctor.bio && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-            {doctor.bio}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{doctor.bio}</p>
         )}
-        
+
         <div className="space-y-2">
-          {doctor.experience && (
+          {typeof doctor.experience === "number" && (
             <div className="flex items-center gap-2 text-sm">
-              <Award className="h-4 w-4 text-muted-foreground" />
+              <Award className="h-4 w-4 text-muted-foreground shrink-0" />
               <span>{doctor.experience}+ years experience</span>
             </div>
           )}
-          
-          {doctor.location && (
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{doctor.location}</span>
-            </div>
-          )}
-          
+
           <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>Available Today</span>
+            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span>Available for booking</span>
           </div>
-          
-          {doctor.consultationFee && (
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-sm text-muted-foreground">Consultation Fee</span>
-              <span className="font-semibold">/session</span>
+
+          {typeof doctor.consultationFee === "number" && (
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <IndianRupee className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span>Rs. {doctor.consultationFee} / session</span>
             </div>
           )}
         </div>
       </CardContent>
-      
+
       <CardFooter className="pt-3 border-t">
         <div className="flex w-full gap-2">
-          <Button 
-            variant="outline" 
-            className="flex-1 gap-2"
+          <Button
+            variant="outline"
+            className="flex-1 gap-1 text-sm"
             onClick={onViewDetails}
           >
-            View Details
+            View Profile
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button 
-            className="flex-1 gap-2"
-            onClick={onBookAppointment}
-          >
+          <Button className="flex-1 gap-1 text-sm" onClick={onBookAppointment}>
             <MessageSquare className="h-4 w-4" />
             Book Now
           </Button>
