@@ -7,13 +7,11 @@ import {
   useCreateAppointment,
   useUpdateAppointment,
 } from "@/hooks/use-appointments";
+import { useMyPrescriptions } from "@/hooks/use-prescriptions";
 import { Navbar } from "@/components/layout-navbar";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +23,6 @@ import {
   Filter,
   User,
   Stethoscope,
-  MessageSquare,
   ChevronRight,
   Plus,
   AlertCircle,
@@ -33,6 +30,8 @@ import {
   XCircle,
   ExternalLink,
   Send,
+  ClipboardList,
+  Pill,
 } from "lucide-react";
 import { format, parseISO, isAfter, isBefore } from "date-fns";
 import {
@@ -56,6 +55,7 @@ export default function PatientDashboard() {
   const { data: appointments = [], isLoading: appointmentsLoading } = useAppointments();
   const { mutate: createAppointment, isPending: isCreating } = useCreateAppointment();
   const { mutate: updateAppointment } = useUpdateAppointment();
+  const { data: prescriptions = [], isLoading: prescriptionsLoading } = useMyPrescriptions();
 
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -129,7 +129,7 @@ export default function PatientDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back, {user?.patient?.fullName || user?.fullName}!
+              Welcome back, {(user as any)?.patient?.fullName || user?.fullName}!
             </h1>
             <p className="text-muted-foreground">
               Manage your health journey and connect with mental health professionals
@@ -141,10 +141,7 @@ export default function PatientDashboard() {
               <Calendar className="h-4 w-4 mr-2" />
               My Appointments ({upcomingAppointments.length + pendingAppointments.length})
             </Button>
-            <Button
-              onClick={() => setActiveTab("find-doctors")}
-              className="shadow-lg shadow-primary/20"
-            >
+            <Button onClick={() => setActiveTab("find-doctors")} className="shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4 mr-2" />
               Book New Appointment
             </Button>
@@ -152,32 +149,21 @@ export default function PatientDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard
-            icon={<Calendar className="h-5 w-5" />}
-            label="Upcoming Appointments"
-            value={upcomingAppointments.length}
-            color="blue"
-          />
-          <StatCard
-            icon={<Clock className="h-5 w-5" />}
-            label="Pending Requests"
-            value={pendingAppointments.length}
-            color="yellow"
-          />
-          <StatCard
-            icon={<Stethoscope className="h-5 w-5" />}
-            label="Doctors Available"
-            value={filteredDoctors.length}
-            color="green"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard icon={<Calendar className="h-5 w-5" />} label="Upcoming Appointments" value={upcomingAppointments.length} color="blue" />
+          <StatCard icon={<Clock className="h-5 w-5" />} label="Pending Requests" value={pendingAppointments.length} color="yellow" />
+          <StatCard icon={<Stethoscope className="h-5 w-5" />} label="Doctors Available" value={filteredDoctors.length} color="green" />
+          <StatCard icon={<ClipboardList className="h-5 w-5" />} label="Prescriptions" value={prescriptions.length} color="purple" />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[480px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[640px]">
             <TabsTrigger value="find-doctors">Find Doctors</TabsTrigger>
             <TabsTrigger value="my-appointments">
               Appointments ({upcomingAppointments.length + pendingAppointments.length})
+            </TabsTrigger>
+            <TabsTrigger value="prescriptions">
+              Prescriptions ({prescriptions.length})
             </TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
@@ -204,19 +190,11 @@ export default function PatientDashboard() {
                       <SelectContent>
                         <SelectItem value="all">All Specializations</SelectItem>
                         {specializations.map((spec) => (
-                          <SelectItem key={spec} value={spec}>
-                            {spec}
-                          </SelectItem>
+                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setSelectedSpecialization("all");
-                      }}
-                    >
+                    <Button variant="outline" onClick={() => { setSearchQuery(""); setSelectedSpecialization("all"); }}>
                       <Filter className="h-4 w-4" />
                     </Button>
                   </div>
@@ -229,14 +207,7 @@ export default function PatientDashboard() {
                 <CardContent className="py-12 text-center">
                   <Stethoscope className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                   <p className="text-muted-foreground">No doctors found</p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedSpecialization("all");
-                    }}
-                  >
+                  <Button variant="outline" className="mt-4" onClick={() => { setSearchQuery(""); setSelectedSpecialization("all"); }}>
                     Clear Filters
                   </Button>
                 </CardContent>
@@ -251,10 +222,7 @@ export default function PatientDashboard() {
                     <DoctorCard
                       key={doctor._id}
                       doctor={doctor}
-                      onBookAppointment={() => {
-                        setSelectedDoctor(doctor);
-                        setShowBookingDialog(true);
-                      }}
+                      onBookAppointment={() => { setSelectedDoctor(doctor); setShowBookingDialog(true); }}
                       onViewDetails={() => navigate(`/doctors/${doctor._id}`)}
                     />
                   ))}
@@ -360,13 +328,40 @@ export default function PatientDashboard() {
             )}
           </TabsContent>
 
+          {/* Prescriptions Tab */}
+          <TabsContent value="prescriptions" className="space-y-4 mt-6">
+            {prescriptionsLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+                  <p className="mt-4 text-muted-foreground">Loading prescriptions...</p>
+                </CardContent>
+              </Card>
+            ) : prescriptions.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <ClipboardList className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="font-medium text-muted-foreground">No prescriptions yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Your doctor will add prescriptions after your consultations
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {prescriptions.length} prescription{prescriptions.length !== 1 ? "s" : ""} from your doctors
+                </p>
+                {prescriptions.map((rx: any) => (
+                  <PatientPrescriptionCard key={rx._id} prescription={rx} />
+                ))}
+              </>
+            )}
+          </TabsContent>
+
           {/* Activity Feed Tab */}
           <TabsContent value="activity" className="mt-6">
-            <ActivityFeed
-              appointments={appointments}
-              userId={user?.id || ""}
-              userRole="patient"
-            />
+            <ActivityFeed appointments={appointments} userId={user?.id || ""} userRole="patient" />
           </TabsContent>
         </Tabs>
       </div>
@@ -387,23 +382,15 @@ export default function PatientDashboard() {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  color: string;
+function StatCard({ icon, label, value, color }: {
+  icon: React.ReactNode; label: string; value: number; color: string;
 }) {
   const colorClasses: Record<string, string> = {
     blue: "bg-blue-500/10 text-blue-600",
     yellow: "bg-yellow-500/10 text-yellow-600",
     green: "bg-green-500/10 text-green-600",
+    purple: "bg-purple-500/10 text-purple-600",
   };
-
   return (
     <Card>
       <CardContent className="p-6">
@@ -420,19 +407,10 @@ function StatCard({
 }
 
 function AppointmentCard({
-  appointment,
-  onViewDetails,
-  onCancel,
-  onMessage,
-  isUpcoming = false,
-  isPast = false,
+  appointment, onViewDetails, onCancel, onMessage, isUpcoming = false, isPast = false,
 }: {
-  appointment: any;
-  onViewDetails: () => void;
-  onCancel?: () => void;
-  onMessage?: () => void;
-  isUpcoming?: boolean;
-  isPast?: boolean;
+  appointment: any; onViewDetails: () => void; onCancel?: () => void;
+  onMessage?: () => void; isUpcoming?: boolean; isPast?: boolean;
 }) {
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -441,17 +419,12 @@ function AppointmentCard({
     cancelled: "bg-gray-100 text-gray-800 border-gray-200",
     completed: "bg-blue-100 text-blue-800 border-blue-200",
   };
-
   const StatusIcon = {
-    pending: Clock,
-    accepted: CheckCircle2,
-    rejected: XCircle,
-    cancelled: XCircle,
-    completed: CheckCircle2,
+    pending: Clock, accepted: CheckCircle2, rejected: XCircle,
+    cancelled: XCircle, completed: CheckCircle2,
   }[appointment.status as string] || AlertCircle;
 
-  const canCancel =
-    !isPast && onCancel && ["pending", "accepted"].includes(appointment.status);
+  const canCancel = !isPast && onCancel && ["pending", "accepted"].includes(appointment.status);
 
   return (
     <Card className={isUpcoming ? "border-l-4 border-l-primary" : ""}>
@@ -466,34 +439,21 @@ function AppointmentCard({
                 <h3 className="font-semibold text-lg">
                   Dr. {appointment.doctor?.fullName || "Unknown Doctor"}
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  {appointment.doctor?.specialization || ""}
-                </p>
-
+                <p className="text-sm text-muted-foreground">{appointment.doctor?.specialization || ""}</p>
                 <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {format(parseISO(appointment.date), "PPP")}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {format(parseISO(appointment.date), "p")}
-                  </span>
+                  <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{format(parseISO(appointment.date), "PPP")}</span>
+                  <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{format(parseISO(appointment.date), "p")}</span>
                   <Badge className={statusColors[appointment.status] + " gap-1"}>
                     <StatusIcon className="h-3 w-3" />
                     {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                   </Badge>
                 </div>
-
                 {appointment.symptoms && (
                   <div className="mt-3 p-3 bg-muted rounded-md">
                     <p className="text-sm font-medium">Reason:</p>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {appointment.symptoms}
-                    </p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{appointment.symptoms}</p>
                   </div>
                 )}
-
                 {appointment.doctorNotes && (
                   <div className="mt-2 p-3 bg-blue-50 rounded-md">
                     <p className="text-sm font-medium text-blue-800">Doctor's Notes:</p>
@@ -503,31 +463,73 @@ function AppointmentCard({
               </div>
             </div>
           </div>
-
           <div className="flex flex-col gap-2 shrink-0">
             <Button onClick={onViewDetails} variant="outline" className="gap-2 whitespace-nowrap">
-              <ExternalLink className="h-4 w-4" />
-              View Doctor
+              <ExternalLink className="h-4 w-4" />View Doctor
             </Button>
-
             {onMessage && (
               <Button onClick={onMessage} variant="outline" className="gap-2 whitespace-nowrap">
-                <Send className="h-4 w-4" />
-                Message
+                <Send className="h-4 w-4" />Message
               </Button>
             )}
-
             {canCancel && (
-              <Button
-                variant="outline"
-                className="text-destructive border-destructive/30 hover:bg-destructive/5"
-                onClick={onCancel}
-              >
+              <Button variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={onCancel}>
                 Cancel
               </Button>
             )}
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PatientPrescriptionCard({ prescription }: { prescription: any }) {
+  const doctorName =
+    prescription.doctorName ||
+    (prescription.doctorId as any)?.fullName ||
+    "Your Doctor";
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="p-2 bg-primary/10 rounded-full shrink-0">
+            <ClipboardList className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">Dr. {doctorName}</h3>
+            <p className="text-sm text-muted-foreground">
+              {format(new Date(prescription.createdAt), "PPP")}
+            </p>
+          </div>
+          <Badge className="ml-auto bg-primary/10 text-primary border-primary/20">
+            {prescription.medicines.length} medicine{prescription.medicines.length !== 1 ? "s" : ""}
+          </Badge>
+        </div>
+
+        <div className="space-y-2">
+          {prescription.medicines.map((med: any, i: number) => (
+            <div key={i} className="p-3 border rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Pill className="h-4 w-4 text-primary shrink-0" />
+                <span className="font-semibold text-sm">{med.name}</span>
+                <Badge variant="secondary" className="text-xs">{med.dosage}</Badge>
+                <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-200">{med.duration}</Badge>
+              </div>
+              {med.instructions && (
+                <p className="text-xs text-muted-foreground mt-1.5 ml-6">{med.instructions}</p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {prescription.notes && (
+          <div className="mt-3 p-3 bg-amber-50 rounded-md border border-amber-100">
+            <p className="text-sm font-medium text-amber-800">Doctor's Notes:</p>
+            <p className="text-sm text-amber-700 mt-0.5">{prescription.notes}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

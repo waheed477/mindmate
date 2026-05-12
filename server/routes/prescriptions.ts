@@ -1,0 +1,99 @@
+import express from "express";
+import { authenticate } from "../auth.js";
+import { Prescription } from "../models/Prescription.js";
+
+const router = express.Router();
+router.use(authenticate);
+
+// POST /api/prescriptions — Doctor creates a prescription
+router.post("/", async (req: express.Request, res: express.Response) => {
+  try {
+    const user = req.user as any;
+    if (user.role !== "doctor") {
+      return res.status(403).json({ success: false, message: "Only doctors can create prescriptions" });
+    }
+
+    const { patientId, medicines, notes, appointmentId, patientName } = req.body;
+
+    if (!patientId) {
+      return res.status(400).json({ success: false, message: "patientId is required" });
+    }
+    if (!Array.isArray(medicines) || medicines.length === 0) {
+      return res.status(400).json({ success: false, message: "At least one medicine is required" });
+    }
+    for (const med of medicines) {
+      if (!med.name?.trim() || !med.dosage?.trim() || !med.duration?.trim()) {
+        return res.status(400).json({ success: false, message: "Each medicine must have name, dosage, and duration" });
+      }
+    }
+
+    const prescription = await Prescription.create({
+      doctorId: user.id,
+      patientId,
+      medicines,
+      notes: notes || "",
+      appointmentId: appointmentId || null,
+      doctorName: user.fullName || "",
+      patientName: patientName || "",
+    });
+
+    res.status(201).json({ success: true, data: prescription });
+  } catch (error: any) {
+    console.error("Create prescription error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create prescription",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+});
+
+// GET /api/prescriptions/my — Patient fetches their own prescriptions
+router.get("/my", async (req: express.Request, res: express.Response) => {
+  try {
+    const user = req.user as any;
+    if (user.role !== "patient") {
+      return res.status(403).json({ success: false, message: "Only patients can access this endpoint" });
+    }
+
+    const prescriptions = await Prescription.find({ patientId: user.id })
+      .populate("doctorId", "fullName email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ success: true, data: prescriptions });
+  } catch (error: any) {
+    console.error("Get patient prescriptions error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch prescriptions",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+});
+
+// GET /api/prescriptions/doctor — Doctor fetches all prescriptions they created
+router.get("/doctor", async (req: express.Request, res: express.Response) => {
+  try {
+    const user = req.user as any;
+    if (user.role !== "doctor") {
+      return res.status(403).json({ success: false, message: "Only doctors can access this endpoint" });
+    }
+
+    const prescriptions = await Prescription.find({ doctorId: user.id })
+      .populate("patientId", "fullName email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ success: true, data: prescriptions });
+  } catch (error: any) {
+    console.error("Get doctor prescriptions error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch prescriptions",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+});
+
+export default router;

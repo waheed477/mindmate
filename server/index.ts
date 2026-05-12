@@ -8,6 +8,7 @@ import { setupAuth } from "./auth";
 import { setupSocket } from "./socket";
 import appointmentRoutes from "./routes/appointments";
 import messageRoutes from "./routes/messages";
+import prescriptionRoutes from "./routes/prescriptions";
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 // API Routes
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
 
 (async () => {
   try {
