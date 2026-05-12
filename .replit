@@ -1,7 +1,7 @@
 modules = ["nodejs-20", "web"]
 [agent]
 expertMode = true
-stack = "BEST_EFFORT_FALLBACK"
+stack = "FULLSTACK_JS"
 
 [nix]
 channel = "stable-25_05"
@@ -56,5 +56,12 @@ externalPort = 5000
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "start.sh"]
-build = ["bash", "-c", "cd client && npm run build"]
+run = ["node", "./dist/index.cjs"]
+build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+JWT_SECRET = "mindmate-jwt-secret-replit-2024"
+NODE_ENV = "development"
+PORT = "3000"
