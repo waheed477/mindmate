@@ -1,6 +1,7 @@
 import express from "express";
 import { authenticate } from "../auth.js";
 import { Prescription } from "../models/Prescription.js";
+import { User } from "../models/User.js";
 
 const router = express.Router();
 router.use(authenticate);
@@ -27,6 +28,13 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       }
     }
 
+    // Look up patient name server-side as authoritative fallback
+    let resolvedPatientName = patientName || "";
+    if (!resolvedPatientName) {
+      const patientUser = await User.findById(patientId).select("fullName").lean() as any;
+      resolvedPatientName = patientUser?.fullName || "";
+    }
+
     const prescription = await Prescription.create({
       doctorId: user.id,
       patientId,
@@ -34,7 +42,7 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       notes: notes || "",
       appointmentId: appointmentId || null,
       doctorName: user.fullName || "",
-      patientName: patientName || "",
+      patientName: resolvedPatientName,
     });
 
     res.status(201).json({ success: true, data: prescription });
