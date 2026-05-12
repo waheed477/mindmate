@@ -136,7 +136,11 @@ export default function PatientDashboard() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button variant="outline" onClick={() => navigate("/edit-profile")}>
+              <User className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
             <Button variant="outline" onClick={() => setActiveTab("my-appointments")}>
               <Calendar className="h-4 w-4 mr-2" />
               My Appointments ({upcomingAppointments.length + pendingAppointments.length})

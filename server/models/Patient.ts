@@ -9,6 +9,9 @@ const PatientSchema = new Schema({
   condition: String,
   severity: String,
   medicalHistory: String,
-});
+  address: String,
+  emergencyContact: String,
+  profilePicture: String,
+}, { timestamps: true });
 
 export const Patient = model("Patient", PatientSchema);

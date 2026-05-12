@@ -1,12 +1,38 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-interface User {
+export interface User {
   id: string;
   email: string;
   username: string;
   role: "patient" | "doctor";
   fullName: string;
+  profilePicture?: string;
+  patientProfileId?: string;
+  doctorProfileId?: string;
+  patient?: {
+    _id: string;
+    fullName: string;
+    age?: number;
+    gender?: string;
+    contactNumber?: string;
+    profilePicture?: string;
+    address?: string;
+    emergencyContact?: string;
+    medicalHistory?: string;
+  };
+  doctor?: {
+    _id: string;
+    fullName: string;
+    specialization?: string;
+    verificationStatus?: string;
+    consultationFee?: number;
+    profilePicture?: string;
+    bio?: string;
+    qualification?: string;
+    experience?: number;
+    licenseNumber?: string;
+  };
 }
 
 const API_BASE = "";
@@ -18,34 +44,44 @@ export function useAuth() {
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user is already logged in
+  const redirectBasedOnRole = (role: string) => {
+    if (role === "doctor") {
+      navigate("/doctor/dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
+  const refreshUser = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+    } catch (error) {
+      console.error("Refresh user error:", error);
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
-      
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-      
+      if (!token) { setIsLoading(false); return; }
       try {
         const response = await fetch(`${API_BASE}/api/auth/me`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         });
-        
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-          console.log("✅ User already logged in:", data.user);
-          
-          // Auto-redirect based on stored user role
           redirectBasedOnRole(data.user.role);
         } else {
-          // Token invalid, clear it
           localStorage.removeItem("token");
           localStorage.removeItem("user");
         }
@@ -57,83 +93,30 @@ export function useAuth() {
         setIsLoading(false);
       }
     };
-
     checkAuth();
   }, []);
 
-  // Function to redirect based on role - MATCHES YOUR App.tsx ROUTES
-  const redirectBasedOnRole = (role: string) => {
-    console.log("🔀 Redirecting based on role:", role);
-    if (role === "doctor") {
-      // Match your App.tsx route: /doctor/dashboard
-      navigate("/doctor/dashboard");
-    } else {
-      // Match your App.tsx route: /dashboard
-      navigate("/dashboard");
-    }
-  };
-
-  // Login function
   const login = async (credentials: { email: string; password: string; userType?: string }) => {
     setIsLoggingIn(true);
     try {
-      console.log("🔐 Attempting login with:", { 
-        email: credentials.email, 
-        userType: credentials.userType || "unknown" 
-      });
-
-      // Backend expects "username" field, frontend sends "email"
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: credentials.email,
-          password: credentials.password
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: credentials.email, password: credentials.password }),
       });
-
-      console.log("📥 Login response status:", response.status);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Login error response:", errorText);
-        let errorMessage = "Login failed";
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = errorText || errorMessage;
-        }
-        
-        throw new Error(errorMessage);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Login failed");
       }
-
       const data = await response.json();
-      console.log("✅ Login successful:", { 
-        user: data.user.email, 
-        role: data.user.role 
-      });
-      
-      // Store token in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userRole", data.user.role);
-      
-      // Set user state
       setUser(data.user);
-      
-      // Show success message
       alert(`✅ Welcome back, ${data.user.fullName}!`);
-      
-      // Redirect based on role
       redirectBasedOnRole(data.user.role);
-      
       return data;
-    } catch (error) {
-      console.error("❌ Login error:", error);
+    } catch (error: any) {
       alert(`Login failed: ${error.message}`);
       throw error;
     } finally {
@@ -141,10 +124,9 @@ export function useAuth() {
     }
   };
 
-  // Register function
-  const register = async (data: { 
-    email: string; 
-    password: string; 
+  const register = async (data: {
+    email: string;
+    password: string;
     name: string;
     role?: string;
     age?: number;
@@ -154,62 +136,25 @@ export function useAuth() {
     licenseNumber?: string;
     experience?: number;
     consultationFee?: number;
+    bio?: string;
+    profilePicture?: string;
+    licensePicture?: string;
   }) => {
     setIsRegistering(true);
     try {
-      const registrationData = {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        role: data.role || "patient",
-        age: data.age,
-        gender: data.gender,
-        contactNumber: data.contactNumber,
-        specialization: data.specialization,
-        licenseNumber: data.licenseNumber,
-        experience: data.experience,
-        consultationFee: data.consultationFee
-      };
-      
-      console.log("📤 Sending registration data:", registrationData);
-      
       const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registrationData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, role: data.role || "patient" }),
       });
-
-      console.log("📥 Registration response status:", response.status);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Registration error response:", errorText);
-        let errorMessage = "Registration failed";
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = errorText || errorMessage;
-        }
-        
-        throw new Error(errorMessage);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Registration failed");
       }
-
       const result = await response.json();
-      console.log("✅ Registration successful");
-      
-      // Show success message
-      alert(`✅ Registration successful! Please login with your credentials.`);
-      
-      // Redirect to login page
       navigate("/login");
-      
       return result;
-    } catch (error) {
-      console.error("❌ Registration error:", error);
+    } catch (error: any) {
       alert(`Registration failed: ${error.message}`);
       throw error;
     } finally {
@@ -217,16 +162,69 @@ export function useAuth() {
     }
   };
 
-  // Logout function
+  const updateProfile = async (updates: {
+    fullName?: string;
+    profilePicture?: string;
+    age?: number;
+    gender?: string;
+    contactNumber?: string;
+    address?: string;
+    emergencyContact?: string;
+    medicalHistory?: string;
+    specialization?: string;
+    qualification?: string;
+    experience?: number;
+    consultationFee?: number;
+    bio?: string;
+    licenseNumber?: string;
+    licensePicture?: string;
+    hospitalAffiliation?: string;
+  }) => {
+    const token = localStorage.getItem("token");
+    if (!token || !user) throw new Error("Not authenticated");
+
+    const endpoint = user.role === "doctor" ? "/api/profile/doctor" : "/api/profile/patient";
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      method: "PUT",
+      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to update profile");
+    }
+
+    await refreshUser();
+    return response.json();
+  };
+
+  const deleteAccount = async (password: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not authenticated");
+    const response = await fetch(`${API_BASE}/api/profile/account`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to delete account");
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
+    setUser(null);
+    navigate("/");
+  };
+
   const logout = async () => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
         await fetch(`${API_BASE}/api/auth/logout`, {
           method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
       }
     } catch (error) {
@@ -240,20 +238,9 @@ export function useAuth() {
     }
   };
 
-  // Get current token
-  const getToken = () => {
-    return localStorage.getItem("token");
-  };
-
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return !!localStorage.getItem("token");
-  };
-
-  // Get user role
-  const getUserRole = () => {
-    return user?.role || localStorage.getItem("userRole");
-  };
+  const getToken = () => localStorage.getItem("token");
+  const isAuthenticated = () => !!localStorage.getItem("token");
+  const getUserRole = () => user?.role || localStorage.getItem("userRole");
 
   return {
     user,
@@ -266,5 +253,8 @@ export function useAuth() {
     getToken,
     isAuthenticated,
     getUserRole,
+    updateProfile,
+    deleteAccount,
+    refreshUser,
   };
 }

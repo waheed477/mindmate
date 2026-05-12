@@ -9,6 +9,7 @@ import { setupSocket } from "./socket";
 import appointmentRoutes from "./routes/appointments";
 import messageRoutes from "./routes/messages";
 import prescriptionRoutes from "./routes/prescriptions";
+import profileRoutes from "./routes/profile";
 
 const app = express();
 const httpServer = createServer(app);
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/profile", profileRoutes);
 
 (async () => {
   try {

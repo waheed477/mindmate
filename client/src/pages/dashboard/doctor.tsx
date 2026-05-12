@@ -25,6 +25,7 @@ import {
   Trash2,
   FileText,
   Pill,
+  Settings,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import {
@@ -177,20 +178,26 @@ export default function DoctorDashboard() {
       <Navbar />
       <div className="container py-8 space-y-8">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Dr. {(user as any)?.doctor?.fullName || user?.fullName}
-            </h1>
-            {(user as any)?.doctor?.verificationStatus === "verified" && (
-              <Badge className="bg-green-500/10 text-green-600 border-green-200">
-                ✓ Verified
-              </Badge>
-            )}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">
+                Dr. {(user as any)?.doctor?.fullName || user?.fullName}
+              </h1>
+              {(user as any)?.doctor?.verificationStatus === "verified" && (
+                <Badge className="bg-green-500/10 text-green-600 border-green-200">
+                  ✓ Verified
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground">
+              Manage your appointments and patient consultations
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Manage your appointments and patient consultations
-          </p>
+          <Button variant="outline" onClick={() => navigate("/edit-profile")} className="gap-2 w-full md:w-auto">
+            <Settings className="h-4 w-4" />
+            Edit Profile
+          </Button>
         </div>
 
         {/* Stats */}

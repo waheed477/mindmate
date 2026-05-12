@@ -20,8 +20,8 @@ const buildAuthUserPayload = async (user: any) => {
 
   if (user.role === "doctor") {
     const doctorProfile = await Doctor.findOne({ userId: user._id })
-      .select("_id fullName specialization verificationStatus consultationFee")
-      .lean();
+      .select("_id fullName specialization verificationStatus consultationFee profilePicture bio qualification experience licenseNumber")
+      .lean() as any;
 
     if (doctorProfile) {
       authUser.doctorProfileId = String(doctorProfile._id);
@@ -30,15 +30,20 @@ const buildAuthUserPayload = async (user: any) => {
         fullName: doctorProfile.fullName,
         specialization: doctorProfile.specialization,
         verificationStatus: doctorProfile.verificationStatus,
-        consultationFee: doctorProfile.consultationFee
+        consultationFee: doctorProfile.consultationFee,
+        profilePicture: doctorProfile.profilePicture || "",
+        bio: doctorProfile.bio || "",
+        qualification: doctorProfile.qualification || "",
+        experience: doctorProfile.experience ?? 0,
+        licenseNumber: doctorProfile.licenseNumber || ""
       };
     }
   }
 
   if (user.role === "patient") {
     const patientProfile = await Patient.findOne({ userId: user._id })
-      .select("_id fullName age gender contactNumber")
-      .lean();
+      .select("_id fullName age gender contactNumber profilePicture address emergencyContact medicalHistory")
+      .lean() as any;
 
     if (patientProfile) {
       authUser.patientProfileId = String(patientProfile._id);
@@ -47,7 +52,11 @@ const buildAuthUserPayload = async (user: any) => {
         fullName: patientProfile.fullName,
         age: patientProfile.age,
         gender: patientProfile.gender,
-        contactNumber: patientProfile.contactNumber
+        contactNumber: patientProfile.contactNumber,
+        profilePicture: patientProfile.profilePicture || "",
+        address: patientProfile.address || "",
+        emergencyContact: patientProfile.emergencyContact || "",
+        medicalHistory: patientProfile.medicalHistory || ""
       };
     }
   }
@@ -160,6 +169,7 @@ router.post("/register", async (req: express.Request, res: express.Response) => 
     });
     
     // Create profile
+    const { bio, profilePicture, licensePicture } = req.body;
     if (role === "doctor") {
       await Doctor.create({
         userId: user._id,
@@ -168,7 +178,10 @@ router.post("/register", async (req: express.Request, res: express.Response) => 
         licenseNumber: licenseNumber || "TEMP123",
         experience: experience || 0,
         consultationFee: consultationFee || 0,
-        verificationStatus: "pending"
+        verificationStatus: "pending",
+        bio: bio || "",
+        profilePicture: profilePicture || "",
+        licensePicture: licensePicture || ""
       });
     } else if (role === "patient") {
       await Patient.create({
@@ -176,7 +189,8 @@ router.post("/register", async (req: express.Request, res: express.Response) => 
         fullName,
         age: age || 18,
         gender: gender || "Other",
-        contactNumber: contactNumber || ""
+        contactNumber: contactNumber || "",
+        profilePicture: profilePicture || ""
       });
     }
     

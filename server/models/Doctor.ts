@@ -20,7 +20,9 @@ const DoctorSchema = new mongoose.Schema({
     required: false,
     unique: true
   },
+  licensePicture: String,
   bio: String,
+  qualification: String,
   experience: {
     type: Number,
     default: 0
@@ -55,7 +57,6 @@ const DoctorSchema = new mongoose.Schema({
   consultationTypes: [String]
 }, { timestamps: true });
 
-// Index for faster queries
 DoctorSchema.index({ specialization: 1 });
 DoctorSchema.index({ verificationStatus: 1 });
 DoctorSchema.index({ rating: -1 });

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCreateAppointment } from "@/hooks/use-appointments";
 import { Doctor, useDoctor } from "@/hooks/use-doctors";
 import { CreateAppointmentData } from "@/types/appointment";
@@ -17,39 +18,24 @@ const formatFee = (fee?: number) => {
 };
 
 const getQualification = (doctor: Doctor) => {
-  if (doctor.qualification && doctor.qualification.trim()) {
-    return doctor.qualification;
-  }
-
+  if (doctor.qualification && doctor.qualification.trim()) return doctor.qualification;
   if (doctor.education?.length) {
     const formatted = doctor.education
       .map((entry) => [entry.degree, entry.university].filter(Boolean).join(" - "))
       .filter((value) => value.trim().length > 0);
-
-    if (formatted.length) {
-      return formatted.join(", ");
-    }
+    if (formatted.length) return formatted.join(", ");
   }
-
   return "Not provided";
 };
 
 const getAvailabilityRows = (doctor: Doctor) => {
-  if (!doctor.availability?.length) {
-    return [];
-  }
-
+  if (!doctor.availability?.length) return [];
   return doctor.availability.map((item, index) => {
     const hasSlotList = item.slots && item.slots.length > 0;
     const hasRange = item.startTime && item.endTime;
-
     let slotText = "Not specified";
-    if (hasSlotList) {
-      slotText = item.slots!.join(", ");
-    } else if (hasRange) {
-      slotText = `${item.startTime} - ${item.endTime}`;
-    }
-
+    if (hasSlotList) slotText = item.slots!.join(", ");
+    else if (hasRange) slotText = `${item.startTime} - ${item.endTime}`;
     return {
       key: `${item.day}-${index}`,
       day: item.day || "Day not set",
@@ -105,9 +91,7 @@ export default function DoctorProfile() {
           <Card>
             <CardContent className="py-10 text-center space-y-4">
               <p className="text-muted-foreground">Doctor ID is missing.</p>
-              <Button asChild>
-                <Link to="/doctors">Back to Doctors</Link>
-              </Button>
+              <Button asChild><Link to="/doctors">Back to Doctors</Link></Button>
             </CardContent>
           </Card>
         </div>
@@ -134,15 +118,15 @@ export default function DoctorProfile() {
           <Card>
             <CardContent className="py-10 text-center space-y-4">
               <p className="text-muted-foreground">Unable to load doctor profile.</p>
-              <Button asChild>
-                <Link to="/doctors">Back to Doctors</Link>
-              </Button>
+              <Button asChild><Link to="/doctors">Back to Doctors</Link></Button>
             </CardContent>
           </Card>
         </div>
       </div>
     );
   }
+
+  const initials = doctor.fullName?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "DR";
 
   return (
     <div className="min-h-screen bg-background">
@@ -157,27 +141,35 @@ export default function DoctorProfile() {
 
         <Card>
           <CardHeader className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-3xl">{doctor.fullName}</CardTitle>
-                  {doctor.verificationStatus === "verified" && (
-                    <Badge className="bg-green-500/10 text-green-700 border-green-300 gap-1">
-                      <BadgeCheck className="h-3 w-3" />
-                      Verified
-                    </Badge>
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+              {/* Doctor identity with avatar */}
+              <div className="flex items-start gap-5">
+                <Avatar className="h-24 w-24 border-2 border-border shrink-0">
+                  <AvatarImage src={doctor.profilePicture} alt={doctor.fullName} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CardTitle className="text-3xl">{doctor.fullName}</CardTitle>
+                    {doctor.verificationStatus === "verified" && (
+                      <Badge className="bg-green-500/10 text-green-700 border-green-300 gap-1">
+                        <BadgeCheck className="h-3 w-3" />
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="text-base">{doctor.specialization}</CardDescription>
+                  {doctor.bio && (
+                    <p className="text-sm text-muted-foreground max-w-lg pt-1">{doctor.bio}</p>
                   )}
                 </div>
-                <CardDescription className="text-base">{doctor.specialization}</CardDescription>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto shrink-0">
                 {getDoctorUserId() && (
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => navigate(`/chat/${getDoctorUserId()}`)}
-                  >
+                  <Button variant="outline" className="gap-2" onClick={() => navigate(`/chat/${getDoctorUserId()}`)}>
                     <MessageSquare className="h-4 w-4" />
                     Message
                   </Button>
@@ -201,7 +193,6 @@ export default function DoctorProfile() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardContent className="p-4 space-y-1">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Qualification</p>
@@ -211,7 +202,6 @@ export default function DoctorProfile() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardContent className="p-4 space-y-1">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Experience</p>
@@ -221,7 +211,6 @@ export default function DoctorProfile() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardContent className="p-4 space-y-1">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Consultation Fee</p>
