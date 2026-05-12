@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
@@ -7,15 +8,10 @@ export default defineConfig({
     react({
       jsxRuntime: "automatic",
     }),
+    tailwindcss(),
   ],
   resolve: {
     alias: {
-      react: path.resolve(__dirname, "./node_modules/react"),
-      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
-      "react-hook-form": path.resolve(__dirname, "./node_modules/react-hook-form"),
-      "@hookform/resolvers": path.resolve(__dirname, "./node_modules/@hookform/resolvers"),
-      "zod": path.resolve(__dirname, "./node_modules/zod"),
-
       "@": path.resolve(__dirname, "./src"),
       "@lib": path.resolve(__dirname, "./src/lib"),
       "@components": path.resolve(__dirname, "./src/components"),
@@ -45,20 +41,5 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "../dist/public"),
     emptyOutDir: true,
-    rollupOptions: {
-      external: [],
-    },
-  },
-  optimizeDeps: {
-    include: [
-      "react",
-      "react-dom",
-      "react-router-dom",
-      "react-hook-form",
-      "@hookform/resolvers",
-      "zod",
-      "socket.io-client",
-    ],
-    force: true,
   },
 });
