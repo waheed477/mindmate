@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger
 } from "@components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@components/ui/avatar";
-import { Brain, User, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { Brain, User, LogOut, LayoutDashboard, Settings, Bot } from "lucide-react";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -51,6 +51,14 @@ export function Navbar() {
                 <Link to="/doctors">
                   <div className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${location.pathname === "/doctors" ? "text-primary" : "text-muted-foreground"}`}>
                     Find Doctors
+                  </div>
+                </Link>
+              )}
+              {!isDoctor && (
+                <Link to="/ai-assistant">
+                  <div className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer flex items-center gap-1.5 ${location.pathname === "/ai-assistant" ? "text-primary" : "text-muted-foreground"}`}>
+                    <Bot className="h-4 w-4" />
+                    AI Assistant
                   </div>
                 </Link>
               )}

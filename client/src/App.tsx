@@ -18,6 +18,7 @@ import ChatPage from "@pages/Chat";
 import Terms from "@pages/terms";
 import Privacy from "@pages/privacy";
 import EditProfile from "@pages/EditProfile";
+import AIAssistant from "@pages/AIAssistant";
 
 function ProtectedRoute({ children, allowedRole }: { children: React.ReactNode, allowedRole?: "patient" | "doctor" }) {
   const { user, isLoading } = useAuth();
@@ -56,6 +57,7 @@ function App() {
               <Route path="/doctor/dashboard" element={<ProtectedRoute allowedRole="doctor"><DoctorDashboard /></ProtectedRoute>} />
               <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/chat/:receiverId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+              <Route path="/ai-assistant" element={<ProtectedRoute allowedRole="patient"><AIAssistant /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

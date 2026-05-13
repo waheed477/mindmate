@@ -10,6 +10,7 @@ import appointmentRoutes from "./routes/appointments";
 import messageRoutes from "./routes/messages";
 import prescriptionRoutes from "./routes/prescriptions";
 import profileRoutes from "./routes/profile";
+import aiChatRoutes from "./routes/ai-chat.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -33,6 +34,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/ai", aiChatRoutes);
 
 (async () => {
   try {
