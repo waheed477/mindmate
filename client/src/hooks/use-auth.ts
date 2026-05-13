@@ -80,7 +80,6 @@ export function useAuth() {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-          redirectBasedOnRole(data.user.role);
         } else {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
@@ -152,7 +151,6 @@ export function useAuth() {
         throw new Error(errorData.message || "Registration failed");
       }
       const result = await response.json();
-      navigate("/login");
       return result;
     } catch (error: any) {
       alert(`Registration failed: ${error.message}`);
@@ -190,13 +188,13 @@ export function useAuth() {
       body: JSON.stringify(updates),
     });
 
+    const result = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to update profile");
+      throw new Error((result as any).message || "Failed to update profile");
     }
 
     await refreshUser();
-    return response.json();
+    return result;
   };
 
   const deleteAccount = async (password: string) => {
