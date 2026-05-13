@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
 export interface User {
@@ -35,9 +35,59 @@ export interface User {
   };
 }
 
+interface AuthContextValue {
+  user: User | null;
+  isLoading: boolean;
+  isLoggingIn: boolean;
+  isRegistering: boolean;
+  login: (credentials: { email: string; password: string; userType?: string }) => Promise<any>;
+  register: (data: {
+    email: string;
+    password: string;
+    name: string;
+    role?: string;
+    age?: number;
+    gender?: string;
+    contactNumber?: string;
+    specialization?: string;
+    licenseNumber?: string;
+    experience?: number;
+    consultationFee?: number;
+    bio?: string;
+    profilePicture?: string;
+    licensePicture?: string;
+  }) => Promise<any>;
+  logout: () => Promise<void>;
+  updateProfile: (updates: {
+    fullName?: string;
+    profilePicture?: string;
+    age?: number;
+    gender?: string;
+    contactNumber?: string;
+    address?: string;
+    emergencyContact?: string;
+    medicalHistory?: string;
+    specialization?: string;
+    qualification?: string;
+    experience?: number;
+    consultationFee?: number;
+    bio?: string;
+    licenseNumber?: string;
+    licensePicture?: string;
+    hospitalAffiliation?: string;
+  }) => Promise<any>;
+  deleteAccount: (password: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
+  getToken: () => string | null;
+  isAuthenticated: () => boolean;
+  getUserRole: () => string | null | undefined;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
 const API_BASE = "";
 
-export function useAuth() {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -240,19 +290,29 @@ export function useAuth() {
   const isAuthenticated = () => !!localStorage.getItem("token");
   const getUserRole = () => user?.role || localStorage.getItem("userRole");
 
-  return {
-    user,
-    isLoading,
-    login,
-    register,
-    logout,
-    isLoggingIn,
-    isRegistering,
-    getToken,
-    isAuthenticated,
-    getUserRole,
-    updateProfile,
-    deleteAccount,
-    refreshUser,
-  };
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
+      isLoggingIn,
+      isRegistering,
+      login,
+      register,
+      logout,
+      updateProfile,
+      deleteAccount,
+      refreshUser,
+      getToken,
+      isAuthenticated,
+      getUserRole,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  return ctx;
 }
