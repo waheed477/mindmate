@@ -1,2 +1,2 @@
 #!/bin/bash
-cd client && npm run dev
+cd client && ./node_modules/.bin/vite
