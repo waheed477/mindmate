@@ -43,12 +43,6 @@ export default function AIAssistant() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
-  }, [user, navigate]);
-
-  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
@@ -124,8 +118,6 @@ export default function AIAssistant() {
       );
     });
   };
-
-  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
