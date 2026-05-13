@@ -163,7 +163,7 @@ export default function DoctorDashboard() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container py-8 flex items-center justify-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
             <p className="mt-4 text-muted-foreground">Loading appointments...</p>
@@ -176,7 +176,7 @@ export default function DoctorDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
