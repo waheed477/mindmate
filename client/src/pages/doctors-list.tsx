@@ -72,7 +72,7 @@ export default function DoctorsList() {
         </div>
 
         <Card>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="p-6 space-y-4 text-center pl-[28px] pr-[28px] pt-[29px] pb-[29px]">
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
               <div className="relative lg:col-span-2">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
