@@ -4,7 +4,7 @@ export default function Privacy() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container py-12 max-w-3xl text-left ml-[40px] mr-[40px]">
+      <div className="container py-12 max-w-3xl ml-[50px] mr-[50px]">
         <h1 className="text-4xl font-bold font-display mb-8">Privacy Policy</h1>
         <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
           <section>
