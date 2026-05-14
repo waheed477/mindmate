@@ -77,10 +77,13 @@ export const setupSocket = (httpServer: HttpServer) => {
           };
 
           const roomId = getRoomId(user.id, receiverId);
-          io.to(roomId).emit("receive_message", payload);
 
-          // Also deliver to receiver's personal room if not already in chat room
-          socket.to(`user_${receiverId}`).emit("new_message_notification", payload);
+          // Send to receiver (others in room + their personal room for fallback)
+          socket.to(roomId).emit("receive_message", payload);
+          socket.to(`user_${receiverId}`).emit("receive_message", payload);
+
+          // Confirm back to sender with real DB _id (so they can replace optimistic message)
+          socket.emit("message_sent", payload);
         } catch (err) {
           console.error("[Socket] send_message error:", err);
           socket.emit("message_error", { message: "Failed to send message" });
