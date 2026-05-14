@@ -265,7 +265,7 @@ export default function AIAssistant() {
             <p className="text-[11px] text-center text-muted-foreground mt-2 flex items-center justify-center gap-1">
               <AlertTriangle className="h-3 w-3 text-amber-500" />
               This AI provides general mental health support. For emergencies, call{" "}
-              <strong>988</strong> or text HOME to <strong>741741</strong>.
+              <strong>1122</strong> or text HOME to <strong>741741</strong>.
             </p>
           </div>
         </div>
@@ -282,7 +282,7 @@ export default function AIAssistant() {
                 <p className="text-xs font-semibold text-foreground">
                   National Suicide Prevention
                 </p>
-                <p className="text-lg font-bold text-primary mt-0.5">988</p>
+                <p className="text-lg font-bold text-primary mt-0.5">1122</p>
                 <p className="text-[11px] text-muted-foreground">Call or text · 24/7</p>
               </div>
               <div className="bg-background rounded-xl p-3 border border-border/60 shadow-sm">
