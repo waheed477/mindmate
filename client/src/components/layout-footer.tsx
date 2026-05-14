@@ -3,7 +3,7 @@
 export function Footer() {
   return (
     <footer className="border-t bg-muted/30 py-6 ml-[0px] mr-[0px]">
-      <div className="container flex flex-col items-center justify-between gap-4 md:flex-row ml-[109px] mr-[109px]">
+      <div className="container flex flex-col items-center justify-between gap-4 md:flex-row ml-[60px] mr-[60px]">
         <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} MindMate. All rights reserved.
         </p>
