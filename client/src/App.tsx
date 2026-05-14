@@ -5,6 +5,7 @@ import { useAuth, AuthProvider } from "@hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { queryClient } from "@lib/queryClient";
 import { Footer } from "@components/layout-footer";
+import { NotificationProvider } from "@hooks/use-notifications";
 
 import NotFound from "@pages/not-found";
 import Home from "@pages/home";
@@ -43,6 +44,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
+        <NotificationProvider>
         <div className="flex flex-col min-h-screen">
           <main className="flex-1">
             <Routes>
@@ -66,6 +68,7 @@ function App() {
           <Footer />
         </div>
         <Toaster />
+        </NotificationProvider>
         </AuthProvider>
       </Router>
     </QueryClientProvider>

@@ -10,6 +10,7 @@ import {
 } from "@components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@components/ui/avatar";
 import { Brain, User, LogOut, LayoutDashboard, Settings, Bot } from "lucide-react";
+import { NotificationBell } from "@components/notification-bell";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -67,6 +68,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {user && user.role === "patient" && <NotificationBell />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

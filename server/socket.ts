@@ -5,6 +5,13 @@ import { Message } from "./models/Message.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "mindmate-secret-key-123";
 
+let _io: Server | null = null;
+
+export const getIO = (): Server => {
+  if (!_io) throw new Error("Socket.io not initialized yet");
+  return _io;
+};
+
 const getRoomId = (a: string, b: string) => [a, b].sort().join("_");
 
 export const setupSocket = (httpServer: HttpServer) => {
@@ -29,6 +36,8 @@ export const setupSocket = (httpServer: HttpServer) => {
       next(new Error("Invalid token"));
     }
   });
+
+  _io = io;
 
   io.on("connection", (socket) => {
     const user = socket.data.user;

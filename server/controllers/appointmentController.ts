@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { Appointment } from "../models/Appointment.js";  // ✅ .js
 import { Doctor } from "../models/Doctor.js";  // ✅ .js
 import { Patient } from "../models/Patient.js";  // ✅ .js
+import { getIO } from "../socket.js";
 
 // Create new appointment
 export const createAppointment = async (req: Request, res: Response) => {
@@ -289,6 +290,51 @@ export const updateAppointment = async (req: Request, res: Response) => {
     )
       .populate("doctor", "fullName specialization consultationFee verificationStatus userId")
       .populate("patient", "fullName age gender contactNumber userId");
+
+    // Emit real-time notification to patient when doctor changes appointment status
+    if (status && ["accepted", "rejected", "completed", "cancelled"].includes(status) && updatedAppointment) {
+      try {
+        const io = getIO();
+        const doc = updatedAppointment.doctor as any;
+        const pat = updatedAppointment.patient as any;
+
+        const patientUserId = pat?.userId
+          ? (typeof pat.userId === "object" ? String(pat.userId._id ?? pat.userId) : String(pat.userId))
+          : null;
+
+        const doctorName = doc?.fullName ?? "Your doctor";
+        const appointmentDate = updatedAppointment.date
+          ? new Date(updatedAppointment.date).toLocaleDateString("en-US", { dateStyle: "medium" })
+          : "your appointment";
+
+        const notifTypeMap: Record<string, string> = {
+          accepted: "appointment_accepted",
+          rejected: "appointment_rejected",
+          completed: "appointment_completed",
+          cancelled: "appointment_cancelled",
+        };
+
+        const messageMap: Record<string, string> = {
+          accepted: `Dr. ${doctorName} has confirmed your appointment on ${appointmentDate}.`,
+          rejected: `Dr. ${doctorName} has declined your appointment request for ${appointmentDate}.`,
+          completed: `Your appointment with Dr. ${doctorName} on ${appointmentDate} has been marked complete.`,
+          cancelled: `Your appointment with Dr. ${doctorName} on ${appointmentDate} was cancelled.`,
+        };
+
+        if (patientUserId) {
+          io.to(`user_${patientUserId}`).emit("appointment_notification", {
+            type: notifTypeMap[status],
+            appointmentId: String(updatedAppointment._id),
+            doctorName,
+            date: appointmentDate,
+            message: messageMap[status],
+          });
+        }
+      } catch (socketErr) {
+        // Non-fatal — log but don't fail the request
+        console.warn("[Socket] Failed to emit appointment notification:", socketErr);
+      }
+    }
 
     res.json({
       success: true,
