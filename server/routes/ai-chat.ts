@@ -1,11 +1,15 @@
+/* Enhanced response mapping based on mental health best practices */
+
 import express from "express";
 import { authenticate } from "../auth.js";
+import { matchKeywordResponse, fallbackResponses } from "../data/mentalHealthResponses.js";
 
 const router = express.Router();
 
-const mentalHealthResponses: Array<{ keywords: string[]; responses: string[] }> = [
+// ─── Existing detailed multi-response categories (fallback layer) ─────────────
+const detailedResponses: Array<{ keywords: string[]; responses: string[] }> = [
   {
-    keywords: ["anxious", "anxiety", "anxiety all week", "anxious all week", "worried", "worry", "panic", "nervous"],
+    keywords: ["anxious", "anxiety", "anxiety all week", "worried", "worry", "panic", "nervous"],
     responses: [
       "I hear you — feeling anxious for an extended period is really exhausting. Anxiety often builds up when our nervous system stays in a heightened state. A few things that can help right now:\n\n• **Box breathing**: Inhale for 4 counts, hold for 4, exhale for 4, hold for 4. Repeat 4–5 times.\n• **Grounding (5-4-3-2-1)**: Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.\n• **Limit caffeine** — it amplifies anxiety significantly.\n\nIf this has persisted for more than two weeks, speaking with a mental health professional can make a big difference. Would you like to share what's been triggering your anxiety?",
       "Persistent anxiety is your mind's way of signaling that something needs attention. That's valid — but it doesn't have to stay this intense.\n\nSome practical steps:\n• Try a **body scan** — lie down, close your eyes, and slowly release tension from your toes to your head.\n• **Journaling** for 10 minutes before bed can offload racing thoughts.\n• Physical movement, even a 20-minute walk, releases tension stored in the body.\n\nYou don't have to manage this alone. A therapist or psychiatrist can offer personalized tools. Is there a specific situation driving this anxiety?"
@@ -26,7 +30,7 @@ const mentalHealthResponses: Array<{ keywords: string[]; responses: string[] }> 
     ]
   },
   {
-    keywords: ["sleep", "cant sleep", "can't sleep", "insomnia", "struggling with sleep", "trouble sleeping", "nightmares", "wake up"],
+    keywords: ["sleep", "cant sleep", "can't sleep", "insomnia", "trouble sleeping", "wake up"],
     responses: [
       "Sleep struggles are deeply frustrating — and poor sleep makes everything else harder to cope with. Here's what the research shows actually works:\n\n**Sleep hygiene essentials:**\n• Keep a consistent wake time (even weekends) — this is the single most impactful change.\n• No screens 30–60 minutes before bed (blue light suppresses melatonin).\n• Keep your bedroom cool (65–68°F / 18–20°C) and dark.\n\n**Winding down:**\n• Try the **military sleep method**: relax your face, drop your shoulders, exhale and relax your chest, then legs. Visualize a calm scene.\n• **4-7-8 breathing**: inhale 4 counts, hold 7, exhale 8.\n\nIf insomnia has persisted for weeks, Cognitive Behavioral Therapy for Insomnia (CBT-I) is the gold-standard treatment — more effective than sleep medication long-term. How long has this been going on?",
       "Sleep is foundational to mental health — everything feels harder when we're running on empty. A few things to try:\n\n**Before bed routine (60 min before sleep):**\n1. Dim the lights in your home\n2. Write down tomorrow's tasks — this clears your mind\n3. Take a warm shower (the drop in body temperature afterward signals sleep)\n4. Practice a short relaxation exercise\n\n**If you wake up at night**: Avoid checking the clock — it increases anxiety. Instead, focus on slow breathing and body relaxation without pressure to fall asleep immediately.\n\nAre you having trouble falling asleep, staying asleep, or both?"
@@ -85,17 +89,29 @@ const generalResponses = [
   "I'm here for you. What you're feeling is valid, and reaching out is an important step.\n\nMental health exists on a spectrum, and everyone struggles at different points. The fact that you're seeking support shows real self-awareness and strength.\n\nFeel free to share more about what's going on — whether it's a specific emotion, situation, or just a general sense that something is off. I'll do my best to offer thoughtful support.\n\nAnd remember: while I can offer general guidance and a compassionate ear, a licensed therapist or counselor can provide personalized, ongoing support tailored specifically to you."
 ];
 
-function getAIResponse(message: string): string {
-  const lowerMsg = message.toLowerCase();
+function getAIResponse(message: string): { response: string; category: string; isCrisis: boolean } {
+  // Layer 1: Check keyword map (crisis entries first, then all others)
+  const keywordMatch = matchKeywordResponse(message);
+  if (keywordMatch) {
+    return keywordMatch;
+  }
 
-  for (const category of mentalHealthResponses) {
+  // Layer 2: Existing detailed multi-response categories (richer, contextual)
+  const lowerMsg = message.toLowerCase();
+  for (const category of detailedResponses) {
     if (category.keywords.some((kw) => lowerMsg.includes(kw))) {
       const responses = category.responses;
-      return responses[Math.floor(Math.random() * responses.length)];
+      const response = responses[Math.floor(Math.random() * responses.length)];
+      console.log(`[AI] Detailed match — keywords: ${category.keywords.slice(0, 2).join(", ")}`);
+      return { response, category: "DETAILED", isCrisis: false };
     }
   }
 
-  return generalResponses[Math.floor(Math.random() * generalResponses.length)];
+  // Layer 3: General fallback
+  const fallbacks = [...generalResponses, ...fallbackResponses];
+  const response = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  console.log("[AI] Fallback response");
+  return { response, category: "FALLBACK", isCrisis: false };
 }
 
 router.post("/chat", authenticate, async (req: any, res) => {
@@ -106,13 +122,18 @@ router.post("/chat", authenticate, async (req: any, res) => {
       return res.status(400).json({ success: false, message: "Message is required" });
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700));
+    // Crisis responses are immediate; others get a small natural delay
+    const { response, category, isCrisis } = getAIResponse(message.trim());
 
-    const response = getAIResponse(message.trim());
+    if (!isCrisis) {
+      await new Promise((resolve) => setTimeout(resolve, 600 + Math.random() * 600));
+    }
 
     res.json({
       success: true,
       response,
+      category,
+      isCrisis,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
