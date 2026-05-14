@@ -120,7 +120,7 @@ export function DoctorCard({ doctor, onBookAppointment, onViewDetails, onMessage
             data-testid={`button-book-${doctor._id}`}
           >
             <MessageSquare className="h-4 w-4" />
-            Book Now
+            Book Appointment
           </Button>
         </div>
         {onMessage && (

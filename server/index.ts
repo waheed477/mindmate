@@ -11,6 +11,7 @@ import messageRoutes from "./routes/messages";
 import prescriptionRoutes from "./routes/prescriptions";
 import profileRoutes from "./routes/profile";
 import aiChatRoutes from "./routes/ai-chat.js";
+import doctorRoutes from "./routes/doctors.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -30,6 +31,7 @@ app.use((req, res, next) => {
 });
 
 // API Routes
+app.use("/api/doctors", doctorRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
