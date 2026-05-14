@@ -222,14 +222,20 @@ export default function PatientDashboard() {
                   Showing {filteredDoctors.length} of {doctors.length} doctors
                 </p>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredDoctors.map((doctor) => (
-                    <DoctorCard
-                      key={doctor._id}
-                      doctor={doctor}
-                      onBookAppointment={() => { setSelectedDoctor(doctor); setShowBookingDialog(true); }}
-                      onViewDetails={() => navigate(`/doctors/${doctor._id}`)}
-                    />
-                  ))}
+                  {filteredDoctors.map((doctor) => {
+                    const doctorUserId = typeof doctor.userId === "object"
+                      ? (doctor.userId as any)?._id
+                      : doctor.userId;
+                    return (
+                      <DoctorCard
+                        key={doctor._id}
+                        doctor={doctor}
+                        onBookAppointment={() => { setSelectedDoctor(doctor); setShowBookingDialog(true); }}
+                        onViewDetails={() => navigate(`/doctors/${doctor._id}`)}
+                        onMessage={doctorUserId ? () => navigate(`/chat/${doctorUserId}`) : undefined}
+                      />
+                    );
+                  })}
                 </div>
               </>
             )}

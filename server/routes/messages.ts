@@ -2,6 +2,9 @@ import express from "express";
 import { authenticate } from "../auth.js";
 import { Message } from "../models/Message.js";
 import { User } from "../models/User.js";
+import { Doctor } from "../models/Doctor.js";
+import { Appointment } from "../models/Appointment.js";
+import { Patient } from "../models/Patient.js";
 
 const router = express.Router();
 
@@ -87,6 +90,117 @@ router.get("/", async (req, res) => {
   } catch (err: any) {
     console.error("Get conversations error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch conversations" });
+  }
+});
+
+// GET /api/messages/doctor/patients — all patients who interacted with logged-in doctor
+router.get("/doctor/patients", async (req, res) => {
+  try {
+    const doctorUserId = req.user.id;
+
+    // Find this doctor's profile
+    const doctorProfile = await Doctor.findOne({ userId: doctorUserId }).lean();
+    if (!doctorProfile) {
+      return res.status(404).json({ success: false, message: "Doctor profile not found" });
+    }
+
+    // Get all appointments for this doctor, populate patient + patient.userId
+    const appointments = await Appointment.find({ doctorId: doctorProfile._id })
+      .populate({
+        path: "patientId",
+        model: "Patient",
+        populate: { path: "userId", model: "User", select: "fullName email role" },
+      })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // Get all message conversations involving this doctor's userId
+    const conversations = await Message.aggregate([
+      { $match: { $or: [{ senderId: doctorUserId }, { receiverId: doctorUserId }] } },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: { $cond: [{ $eq: ["$senderId", doctorUserId] }, "$receiverId", "$senderId"] },
+          lastMessage: { $first: "$$ROOT" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ["$receiverId", doctorUserId] }, { $eq: ["$read", false] }] },
+                1, 0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    // Build map of patientUserId -> unread + last message
+    const msgMap: Record<string, { unreadCount: number; lastMessageAt: Date }> = {};
+    for (const c of conversations) {
+      msgMap[String(c._id)] = {
+        unreadCount: c.unreadCount,
+        lastMessageAt: new Date(c.lastMessage.createdAt),
+      };
+    }
+
+    // Collect unique patients from appointments
+    const patientMap: Record<string, any> = {};
+    for (const appt of appointments) {
+      const patient = appt.patientId as any;
+      if (!patient) continue;
+      const patUserId = String(patient.userId?._id || patient.userId || "");
+      if (!patUserId) continue;
+
+      if (!patientMap[patUserId]) {
+        const msgInfo = msgMap[patUserId] || { unreadCount: 0, lastMessageAt: null };
+        patientMap[patUserId] = {
+          patientUserId: patUserId,
+          patientProfileId: String(patient._id),
+          fullName: patient.fullName || patient.userId?.fullName || "Unknown",
+          email: patient.userId?.email || "",
+          age: patient.age,
+          gender: patient.gender,
+          profilePicture: patient.profilePicture || "",
+          unreadCount: msgInfo.unreadCount,
+          lastInteractionAt: msgInfo.lastMessageAt || new Date(appt.updatedAt),
+          appointmentStatuses: [],
+          hasActiveChat: !!msgMap[patUserId],
+        };
+      }
+      patientMap[patUserId].appointmentStatuses.push(appt.status);
+    }
+
+    // Add message-only contacts (patients who messaged but no appointment)
+    const messageOnlyUserIds = Object.keys(msgMap).filter((uid) => !patientMap[uid]);
+    if (messageOnlyUserIds.length > 0) {
+      const users = await User.find({ _id: { $in: messageOnlyUserIds } }).select("fullName email role").lean();
+      for (const u of users) {
+        const uid = String(u._id);
+        const msgInfo = msgMap[uid];
+        patientMap[uid] = {
+          patientUserId: uid,
+          patientProfileId: null,
+          fullName: u.fullName || u.email || "Unknown",
+          email: u.email,
+          age: null,
+          gender: null,
+          profilePicture: "",
+          unreadCount: msgInfo.unreadCount,
+          lastInteractionAt: msgInfo.lastMessageAt,
+          appointmentStatuses: [],
+          hasActiveChat: true,
+        };
+      }
+    }
+
+    const patients = Object.values(patientMap).sort(
+      (a, b) => new Date(b.lastInteractionAt).getTime() - new Date(a.lastInteractionAt).getTime()
+    );
+
+    res.json({ success: true, patients });
+  } catch (err: any) {
+    console.error("Doctor patients error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch patient interactions" });
   }
 });
 

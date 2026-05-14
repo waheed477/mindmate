@@ -209,11 +209,6 @@ export default function ChatPage() {
     ? receiver.role.charAt(0).toUpperCase() + receiver.role.slice(1)
     : "";
 
-  if (!user) {
-    navigate("/login");
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />

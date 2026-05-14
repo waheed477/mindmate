@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useDoctorAppointments, useUpdateAppointment } from "@/hooks/use-appointments";
 import { useDoctorPrescriptions, useCreatePrescription, Medicine } from "@/hooks/use-prescriptions";
@@ -55,6 +56,33 @@ export default function DoctorDashboard() {
   const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment();
   const { data: prescriptions = [], isLoading: prescriptionsLoading } = useDoctorPrescriptions();
   const { mutate: createPrescription, isPending: isCreatingPrescription } = useCreatePrescription();
+
+  // Patient interactions — all patients who have appointments or messages with this doctor
+  const { data: patientInteractions = [], isLoading: patientsLoading } = useQuery({
+    queryKey: ["doctor-patients"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token") ?? "";
+      const res = await fetch("/api/messages/doctor/patients", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch patient interactions");
+      const data = await res.json();
+      return data.patients as Array<{
+        patientUserId: string;
+        patientProfileId: string | null;
+        fullName: string;
+        email: string;
+        age: number | null;
+        gender: string | null;
+        profilePicture: string;
+        unreadCount: number;
+        lastInteractionAt: string;
+        appointmentStatuses: string[];
+        hasActiveChat: boolean;
+      }>;
+    },
+    staleTime: 60_000,
+  });
 
   // Appointment action dialog
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
@@ -205,16 +233,128 @@ export default function DoctorDashboard() {
           <StatCard icon={<Bell className="h-5 w-5" />} label="Pending Requests" value={pendingAppointments.length} color="yellow" />
           <StatCard icon={<Calendar className="h-5 w-5" />} label="Upcoming" value={upcomingAppointments.length} color="blue" />
           <StatCard icon={<CheckCircle2 className="h-5 w-5" />} label="Completed" value={completedAppointments.length} color="green" />
-          <StatCard icon={<ClipboardList className="h-5 w-5" />} label="Prescriptions" value={prescriptions.length} color="purple" />
+          <StatCard icon={<Users className="h-5 w-5" />} label="Total Patients" value={patientInteractions.length} color="purple" />
         </div>
 
-        <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[560px]">
+        <Tabs defaultValue="patients" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[750px]">
+            <TabsTrigger value="patients">
+              Patients {patientInteractions.length > 0 && `(${patientInteractions.length})`}
+            </TabsTrigger>
             <TabsTrigger value="requests">Requests ({pendingAppointments.length})</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming ({upcomingAppointments.length})</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+            <TabsTrigger value="prescriptions">Rx</TabsTrigger>
           </TabsList>
+
+          {/* Patient Interactions */}
+          <TabsContent value="patients" className="space-y-4 mt-6">
+            {patientsLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+                  <p className="mt-4 text-muted-foreground">Loading patient interactions...</p>
+                </CardContent>
+              </Card>
+            ) : patientInteractions.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="font-medium text-muted-foreground">No patient interactions yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Patients who book appointments or send you messages will appear here
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {patientInteractions.length} patient{patientInteractions.length !== 1 ? "s" : ""} have interacted with you
+                </p>
+                <div className="space-y-3">
+                  {patientInteractions.map((patient) => {
+                    const hasPending = patient.appointmentStatuses.includes("pending");
+                    const hasAccepted = patient.appointmentStatuses.includes("accepted");
+                    const getStatusLabel = () => {
+                      if (hasPending) return { label: "Pending appointment", color: "bg-yellow-100 text-yellow-800 border-yellow-200" };
+                      if (hasAccepted) return { label: "Active appointment", color: "bg-green-100 text-green-800 border-green-200" };
+                      if (patient.hasActiveChat) return { label: "Active chat", color: "bg-blue-100 text-blue-800 border-blue-200" };
+                      return { label: "Past interaction", color: "bg-gray-100 text-gray-700 border-gray-200" };
+                    };
+                    const status = getStatusLabel();
+                    const initials = patient.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+                    return (
+                      <Card key={patient.patientUserId} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-4">
+                            <div className="relative shrink-0">
+                              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">
+                                {initials}
+                              </div>
+                              {patient.unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                                  {patient.unreadCount}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold text-base truncate">{patient.fullName}</h3>
+                                <Badge className={`text-xs ${status.color}`}>{status.label}</Badge>
+                                {patient.unreadCount > 0 && (
+                                  <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
+                                    {patient.unreadCount} unread
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">
+                                {patient.age && <span>Age: {patient.age}</span>}
+                                {patient.gender && <span>{patient.gender}</span>}
+                                {patient.email && <span className="truncate">{patient.email}</span>}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Last interaction: {new Date(patient.lastInteractionAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-2 shrink-0">
+                              <Button
+                                size="sm"
+                                className="gap-2 whitespace-nowrap"
+                                onClick={() => navigate(`/chat/${patient.patientUserId}`)}
+                                data-testid={`button-chat-patient-${patient.patientUserId}`}
+                              >
+                                <Send className="h-3.5 w-3.5" />
+                                View Chat
+                              </Button>
+                              {patient.appointmentStatuses.length > 0 && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-2 whitespace-nowrap"
+                                  onClick={() => {
+                                    const pending = appointments.find((a: any) => {
+                                      const uid = a.patient?.userId;
+                                      const uid2 = typeof uid === "object" ? uid?._id : uid;
+                                      return String(uid2) === patient.patientUserId;
+                                    });
+                                    if (pending) openActionDialog(pending, pending.status === "pending" ? "accept" : "complete");
+                                  }}
+                                  data-testid={`button-appts-patient-${patient.patientUserId}`}
+                                >
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  Appointments ({patient.appointmentStatuses.length})
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </TabsContent>
 
           {/* Pending Requests */}
           <TabsContent value="requests" className="space-y-4 mt-6">

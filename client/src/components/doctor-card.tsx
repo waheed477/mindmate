@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import {
   Award,
   ChevronRight,
   IndianRupee,
+  Send,
 } from "lucide-react";
 
 interface Doctor {
@@ -22,13 +22,16 @@ interface Doctor {
   experience?: number;
   location?: string;
   avatar?: string;
+  profilePicture?: string;
   verificationStatus?: string;
+  userId?: string | { _id: string };
 }
 
 interface DoctorCardProps {
   doctor: Doctor;
   onBookAppointment: () => void;
   onViewDetails: () => void;
+  onMessage?: () => void;
 }
 
 function getInitials(name: string) {
@@ -40,14 +43,16 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-export function DoctorCard({ doctor, onBookAppointment, onViewDetails }: DoctorCardProps) {
+export function DoctorCard({ doctor, onBookAppointment, onViewDetails, onMessage }: DoctorCardProps) {
+  const avatarSrc = doctor.profilePicture || doctor.avatar || "";
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
+    <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col" data-testid={`card-doctor-${doctor._id}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12 shrink-0">
-              <AvatarImage src={doctor.avatar} />
+              <AvatarImage src={avatarSrc} />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                 {getInitials(doctor.fullName)}
               </AvatarFallback>
@@ -98,21 +103,37 @@ export function DoctorCard({ doctor, onBookAppointment, onViewDetails }: DoctorC
         </div>
       </CardContent>
 
-      <CardFooter className="pt-3 border-t">
+      <CardFooter className="pt-3 border-t flex flex-col gap-2">
         <div className="flex w-full gap-2">
           <Button
             variant="outline"
             className="flex-1 gap-1 text-sm"
             onClick={onViewDetails}
+            data-testid={`button-view-doctor-${doctor._id}`}
           >
             View Profile
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button className="flex-1 gap-1 text-sm" onClick={onBookAppointment}>
+          <Button
+            className="flex-1 gap-1 text-sm"
+            onClick={onBookAppointment}
+            data-testid={`button-book-${doctor._id}`}
+          >
             <MessageSquare className="h-4 w-4" />
             Book Now
           </Button>
         </div>
+        {onMessage && (
+          <Button
+            variant="outline"
+            className="w-full gap-2 text-sm border-primary/30 text-primary hover:bg-primary/5"
+            onClick={onMessage}
+            data-testid={`button-message-doctor-${doctor._id}`}
+          >
+            <Send className="h-4 w-4" />
+            Send Message
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
