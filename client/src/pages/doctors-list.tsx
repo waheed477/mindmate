@@ -65,7 +65,7 @@ export default function DoctorsList() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container py-8 space-y-8">
+      <div className="container py-8 space-y-8 text-center ml-[90px] mr-[90px]">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold font-display tracking-tight">Find Your Specialist</h1>
           <p className="text-muted-foreground">Search by doctor name, specialization, and consultation fee range.</p>
