@@ -2,7 +2,7 @@
 
 export function Footer() {
   return (
-    <footer className="border-t bg-muted/30 py-6">
+    <footer className="border-t bg-muted/30 py-6 ml-[0px] mr-[0px]">
       <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
         <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} MindMate. All rights reserved.
