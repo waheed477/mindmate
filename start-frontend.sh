@@ -1,2 +1,2 @@
 #!/bin/bash
-cd client && npx vite --host 0.0.0.0 --port 5000
+cd frontend/client && npx vite --host 0.0.0.0 --port 5000

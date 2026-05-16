@@ -16,4 +16,4 @@ else
 fi
 
 echo "Starting backend server..."
-NODE_ENV=development npx tsx server/index.ts
+cd backend && NODE_ENV=development npx tsx server/index.ts
