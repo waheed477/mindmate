@@ -2,6 +2,7 @@ import express from "express";
 import { authenticate } from "../auth.js";
 import { Prescription } from "../models/Prescription.js";
 import { User } from "../models/User.js";
+import { getIO } from "../socket.js";
 
 const router = express.Router();
 router.use(authenticate);
@@ -44,6 +45,19 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       doctorName: user.fullName || "",
       patientName: resolvedPatientName,
     });
+
+    // Emit real-time notification to patient
+    try {
+      const io = getIO();
+      io.to(`user_${patientId}`).emit("prescription_notification", {
+        prescriptionId: String(prescription._id),
+        doctorName: user.fullName || "Your doctor",
+        medicineCount: medicines.length,
+      });
+    } catch (socketErr) {
+      // Non-fatal — socket may not be initialized in test environments
+      console.warn("[Socket] Failed to emit prescription notification:", socketErr);
+    }
 
     res.status(201).json({ success: true, data: prescription });
   } catch (error: any) {

@@ -13,12 +13,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { io, Socket } from "socket.io-client";
 
+export type NotificationType =
+  | "appointment_accepted"
+  | "appointment_rejected"
+  | "appointment_completed"
+  | "appointment_cancelled"
+  | "prescription_issued";
+
 export interface AppointmentNotification {
   id: string;
-  type: "appointment_accepted" | "appointment_rejected" | "appointment_completed" | "appointment_cancelled";
+  type: NotificationType;
   title: string;
   message: string;
-  appointmentId: string;
+  appointmentId?: string;
   doctorName: string;
   date: string;
   read: boolean;
@@ -48,6 +55,7 @@ let sharedSocket: Socket | null = null;
 const getNotifSocket = (token: string): Socket => {
   if (sharedSocket?.connected) return sharedSocket;
   if (sharedSocket) {
+    sharedSocket.removeAllListeners();
     sharedSocket.disconnect();
     sharedSocket = null;
   }
@@ -55,8 +63,8 @@ const getNotifSocket = (token: string): Socket => {
     auth: { token },
     transports: ["websocket", "polling"],
     reconnection: true,
-    reconnectionAttempts: 10,
-    reconnectionDelay: 2000,
+    reconnectionAttempts: 15,
+    reconnectionDelay: 1500,
   });
   return sharedSocket;
 };
@@ -75,14 +83,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const socket = getNotifSocket(token);
     socketRef.current = socket;
 
+    const addNotification = (notif: AppointmentNotification) => {
+      setNotifications((prev) => [notif, ...prev].slice(0, 50));
+      toast({
+        title: notif.title,
+        description: notif.message,
+        duration: 6000,
+      });
+    };
+
+    // ── Appointment status changes ──────────────────────────────────────────
     const handleAppointmentNotification = (data: {
-      type: AppointmentNotification["type"];
+      type: NotificationType;
       appointmentId: string;
       doctorName: string;
       date: string;
       message: string;
     }) => {
-      const typeLabels: Record<AppointmentNotification["type"], string> = {
+      const typeLabels: Record<string, string> = {
         appointment_accepted: "Appointment Confirmed",
         appointment_rejected: "Appointment Declined",
         appointment_completed: "Appointment Completed",
@@ -101,21 +119,37 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       };
 
-      setNotifications((prev) => [notif, ...prev].slice(0, 50));
-
-      toast({
-        title: notif.title,
-        description: notif.message,
-        duration: 6000,
-      });
-
+      addNotification(notif);
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
     };
 
+    // ── New prescription issued ─────────────────────────────────────────────
+    const handlePrescriptionNotification = (data: {
+      doctorName: string;
+      medicineCount: number;
+      prescriptionId: string;
+    }) => {
+      const notif: AppointmentNotification = {
+        id: `${Date.now()}-${Math.random()}`,
+        type: "prescription_issued",
+        title: "New Prescription",
+        message: `Dr. ${data.doctorName} has issued you a prescription with ${data.medicineCount} medicine${data.medicineCount !== 1 ? "s" : ""}.`,
+        doctorName: data.doctorName,
+        date: new Date().toLocaleDateString("en-US", { dateStyle: "medium" }),
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      addNotification(notif);
+      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions/my"] });
+    };
+
     socket.on("appointment_notification", handleAppointmentNotification);
+    socket.on("prescription_notification", handlePrescriptionNotification);
 
     return () => {
       socket.off("appointment_notification", handleAppointmentNotification);
+      socket.off("prescription_notification", handlePrescriptionNotification);
     };
   }, [user?.id]);
 
