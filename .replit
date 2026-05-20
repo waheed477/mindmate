@@ -64,3 +64,4 @@ build = ["npm", "run", "build"]
 [userenv.shared]
 NODE_ENV = "development"
 PORT = "3000"
+MONGODB_URI = "mongodb://127.0.0.1:27017/mindmate?directConnection=true"
