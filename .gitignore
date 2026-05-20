@@ -7,3 +7,12 @@ vite.config.ts.*
 .env
 build/
 *.log
+
+# Replit platform files (not part of the codebase)
+.replit
+replit.nix
+.cache/
+.config/
+.upm/
+.agents/
+.local/
