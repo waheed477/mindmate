@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { User } from "./models/User.js";  // ✅ .js extension
 import { Doctor } from "./models/Doctor.js";  // ✅ .js extension
 import { Patient } from "./models/Patient.js";  // ✅ .js extension
+import { getIO } from "./socket.js";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "mindmate-secret-key-123";
@@ -171,7 +172,7 @@ router.post("/register", async (req: express.Request, res: express.Response) => 
     // Create profile
     const { bio, profilePicture, licensePicture } = req.body;
     if (role === "doctor") {
-      await Doctor.create({
+      const newDoctor = await Doctor.create({
         userId: user._id,
         fullName,
         specialization: specialization || "General",
@@ -183,6 +184,13 @@ router.post("/register", async (req: express.Request, res: express.Response) => 
         profilePicture: profilePicture || "",
         licensePicture: licensePicture || ""
       });
+      try {
+        getIO().emit("doctor:registered", {
+          doctorId: String(newDoctor._id),
+          fullName,
+          specialization: specialization || "General",
+        });
+      } catch (_) {}
     } else if (role === "patient") {
       await Patient.create({
         userId: user._id,

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useDoctors, Doctor } from "@/hooks/use-doctors";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSocket } from "@/hooks/use-socket";
 import {
   useAppointments,
   useCreateAppointment,
@@ -50,8 +52,22 @@ import { CreateAppointmentData } from "@/types/appointment";
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const { on, off } = useSocket(getToken());
   const { data: doctors = [], isLoading: doctorsLoading } = useDoctors();
+
+  useEffect(() => {
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ["doctors"] });
+    };
+    const cleanup = on("doctor:registered", handler);
+    return () => {
+      if (typeof cleanup === "function") cleanup();
+      else off("doctor:registered", handler);
+    };
+  }, [on, off, queryClient]);
+
   const { data: appointments = [], isLoading: appointmentsLoading } = useAppointments();
   const { mutate: createAppointment, isPending: isCreating } = useCreateAppointment();
   const { mutate: updateAppointment } = useUpdateAppointment();

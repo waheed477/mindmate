@@ -75,7 +75,7 @@ export const useDoctors = (filters?: DoctorFilters) => {
       return data.data as Doctor[];
     },
     retry: 1,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   });
 };
 
