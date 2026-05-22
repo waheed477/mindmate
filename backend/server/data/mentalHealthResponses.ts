@@ -563,8 +563,33 @@ export function findResponse(message: string): string {
     }
   }
 
-  // Default response if no keyword matches
   console.log(`[AI] No keyword match, using fallback`);
-  return mentalHealthResponses.find(r => r.keywords.includes("default"))?.response || 
-    "Thank you for sharing that with me. Can you tell me more about what you're experiencing? I'm here to listen and support you.";
+  return "Thank you for sharing that with me. Can you tell me more about what you're experiencing? I'm here to listen and support you.";
 }
+
+// matchKeywordResponse — used by ai-chat route
+export function matchKeywordResponse(message: string): { response: string; category: string; isCrisis: boolean } | null {
+  const lowerMessage = message.toLowerCase();
+  const crisisKeywords = ["suicide", "kill myself", "end my life", "suicidal", "take my life",
+    "want to die", "better off dead", "no reason to live", "life not worth living",
+    "suicide method", "how to kill myself", "lethal means", "suicide plan", "have a plan",
+    "self harm", "cutting", "self injury", "nssi", "hurting myself",
+    "self harm deeper", "medical attention self harm", "severe cutting"];
+
+  for (const item of mentalHealthResponses) {
+    for (const keyword of item.keywords) {
+      if (lowerMessage.includes(keyword)) {
+        const isCrisis = crisisKeywords.some(k => lowerMessage.includes(k));
+        return { response: item.response, category: keyword.toUpperCase(), isCrisis };
+      }
+    }
+  }
+  return null;
+}
+
+// fallbackResponses — used by ai-chat route as final fallback layer
+export const fallbackResponses: string[] = [
+  "Thank you for sharing that with me. Mental health is deeply personal, and I want to make sure I understand what you're going through. Could you tell me a bit more about what's been on your mind?",
+  "I appreciate you opening up. Whatever you're going through, you don't have to navigate it alone. Feel free to share more — I'm here to listen.",
+  "I'm here for you. What you're feeling is valid, and reaching out is an important step. Can you tell me more about what's been happening?",
+];
