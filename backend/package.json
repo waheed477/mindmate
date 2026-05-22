@@ -5,5 +5,9 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "start": "NODE_ENV=production node dist/index.cjs"
+  },
+  "dependencies": {
+    "@types/nodemailer": "^8.0.0",
+    "nodemailer": "^8.0.7"
   }
 }
