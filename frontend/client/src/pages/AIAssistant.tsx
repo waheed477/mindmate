@@ -17,12 +17,18 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  "I've been feeling anxious all week",
-  "I can't stop negative thoughts",
-  "How do I cope with stress?",
-  "I'm struggling with sleep",
-  "I feel lonely and isolated",
-  "How to build self-confidence?",
+  "I've been feeling really anxious lately",
+  "I'm struggling with depression and low motivation",
+  "I can't stop overthinking and ruminating",
+  "I'm having trouble sleeping",
+  "I feel lonely and disconnected from everyone",
+  "How do I cope with stress and burnout?",
+  "I'm going through a difficult breakup",
+  "I've been dealing with a lot of family conflict",
+  "I struggle with low self-esteem and confidence",
+  "I need help managing my anger",
+  "I've been feeling overwhelmed and can't cope",
+  "How do I find a therapist that's right for me?",
 ];
 
 const WELCOME_MESSAGE: Message = {
