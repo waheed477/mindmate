@@ -40,6 +40,8 @@ interface AuthContextValue {
   isLoading: boolean;
   isLoggingIn: boolean;
   isRegistering: boolean;
+  verifyEmail: (email: string, code: string) => Promise<any>;
+  resendVerification: (email: string) => Promise<any>;
   login: (credentials: { email: string; password: string; userType?: string }) => Promise<any>;
   register: (data: {
     email: string;
@@ -144,6 +146,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     checkAuth();
   }, []);
+
+  const verifyEmail = async (email: string, code: string) => {
+    const response = await fetch(`${API_BASE}/api/auth/verify-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || "Verification failed");
+    return result;
+  };
+
+  const resendVerification = async (email: string) => {
+    const response = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || "Failed to resend code");
+    return result;
+  };
 
   const login = async (credentials: { email: string; password: string; userType?: string }) => {
     setIsLoggingIn(true);
@@ -296,6 +320,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isLoggingIn,
       isRegistering,
+      verifyEmail,
+      resendVerification,
       login,
       register,
       logout,

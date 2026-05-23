@@ -23,7 +23,7 @@ import {
 } from "@components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@components/ui/avatar";
-import { Brain, Camera, Upload, Loader2 } from "lucide-react";
+import { Brain, Camera, Upload, Loader2, Mail, CheckCircle2, RefreshCw } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@components/ui/radio-group";
 import { useState, useRef } from "react";
 import { uploadImage } from "@/services/uploadService";
@@ -44,14 +44,26 @@ const registerSchema = z.object({
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
+type Step = "form" | "verify";
 
 export default function Register() {
-  const { register, isRegistering } = useAuth();
+  const { register, verifyEmail, resendVerification, isRegistering } = useAuth();
+  const [step, setStep] = useState<Step>("form");
+  const [pendingEmail, setPendingEmail] = useState("");
   const [role, setRole] = useState<"patient" | "doctor">("patient");
   const [profilePicture, setProfilePicture] = useState("");
   const [licensePicture, setLicensePicture] = useState("");
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingLicense, setUploadingLicense] = useState(false);
+
+  // OTP digits
+  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
+  const [resendMsg, setResendMsg] = useState("");
+
   const profilePicRef = useRef<HTMLInputElement>(null);
   const licensePicRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -75,7 +87,13 @@ export default function Register() {
   });
 
   const watchedName = form.watch("fullName");
-  const initials = watchedName?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
+  const initials =
+    watchedName
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?";
 
   const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,29 +130,202 @@ export default function Register() {
       name: data.fullName,
       role: data.role,
       profilePicture: profilePicture || undefined,
-      ...(data.role === "doctor" ? {
-        specialization: data.specialization,
-        licenseNumber: data.licenseNumber,
-        experience: Number(data.experience) || undefined,
-        consultationFee: Number(data.consultationFee) || undefined,
-        bio: data.bio || undefined,
-        licensePicture: licensePicture || undefined,
-      } : {
-        age: Number(data.age) || undefined,
-        gender: data.gender || undefined,
-        contactNumber: data.contactNumber || undefined,
-      }),
+      ...(data.role === "doctor"
+        ? {
+            specialization: data.specialization,
+            licenseNumber: data.licenseNumber,
+            experience: Number(data.experience) || undefined,
+            consultationFee: Number(data.consultationFee) || undefined,
+            bio: data.bio || undefined,
+            licensePicture: licensePicture || undefined,
+          }
+        : {
+            age: Number(data.age) || undefined,
+            gender: data.gender || undefined,
+            contactNumber: data.contactNumber || undefined,
+          }),
     };
 
-    register(payload)
-      .then(() => {
-        alert("✅ Registration successful! Please log in.");
-        navigate("/login");
-      })
-      .catch((error) => {
-        console.error("Registration failed:", error);
-      });
+    try {
+      const result = await register(payload);
+      if (result?.requiresVerification) {
+        setPendingEmail(data.email);
+        setStep("verify");
+      }
+    } catch (_) {
+      // error already shown by use-auth
+    }
   }
+
+  // ── OTP digit handlers ──────────────────────────────────────────────────────
+
+  const handleDigitChange = (index: number, value: string) => {
+    const char = value.replace(/\D/g, "").slice(-1);
+    const next = [...digits];
+    next[index] = char;
+    setDigits(next);
+    setVerifyError("");
+    if (char && index < 5) {
+      digitRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleDigitKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      digitRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleDigitPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length > 0) {
+      e.preventDefault();
+      const next = [...digits];
+      for (let i = 0; i < 6; i++) next[i] = pasted[i] || "";
+      setDigits(next);
+      digitRefs.current[Math.min(pasted.length, 5)]?.focus();
+    }
+  };
+
+  const handleVerify = async () => {
+    const code = digits.join("");
+    if (code.length < 6) {
+      setVerifyError("Please enter all 6 digits.");
+      return;
+    }
+    setIsVerifying(true);
+    setVerifyError("");
+    try {
+      await verifyEmail(pendingEmail, code);
+      navigate("/login", { state: { verified: true } });
+    } catch (err: any) {
+      setVerifyError(err.message || "Invalid code. Please try again.");
+      setDigits(["", "", "", "", "", ""]);
+      digitRefs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setIsResending(true);
+    setResendMsg("");
+    setVerifyError("");
+    try {
+      await resendVerification(pendingEmail);
+      setDigits(["", "", "", "", "", ""]);
+      digitRefs.current[0]?.focus();
+      setResendMsg("A new code has been sent to your email.");
+    } catch (err: any) {
+      setVerifyError(err.message || "Failed to resend code.");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // ── Verify Email Step ───────────────────────────────────────────────────────
+
+  if (step === "verify") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center space-y-2">
+            <Link to="/">
+              <div className="inline-flex items-center justify-center gap-2 text-primary hover:opacity-80 transition-opacity cursor-pointer">
+                <Brain className="h-9 w-9" />
+                <span className="text-2xl font-bold font-display">MindMate</span>
+              </div>
+            </Link>
+          </div>
+
+          <Card>
+            <CardHeader className="text-center space-y-3 pb-2">
+              <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="h-7 w-7 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Check your email</CardTitle>
+              <CardDescription className="text-sm leading-relaxed">
+                We sent a 6-digit verification code to{" "}
+                <span className="font-semibold text-foreground">{pendingEmail}</span>
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-6 pt-4">
+              {/* OTP Boxes */}
+              <div className="flex justify-center gap-2" onPaste={handleDigitPaste}>
+                {digits.map((d, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => { digitRefs.current[i] = el; }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={d}
+                    data-testid={`input-otp-${i}`}
+                    onChange={(e) => handleDigitChange(i, e.target.value)}
+                    onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                    className={`w-11 h-14 text-center text-xl font-bold rounded-lg border-2 bg-background outline-none transition-colors
+                      ${d ? "border-primary text-primary" : "border-border text-foreground"}
+                      focus:border-primary focus:ring-2 focus:ring-primary/20`}
+                  />
+                ))}
+              </div>
+
+              {/* Error */}
+              {verifyError && (
+                <p className="text-sm text-destructive text-center" data-testid="text-verify-error">
+                  {verifyError}
+                </p>
+              )}
+
+              {/* Resend success */}
+              {resendMsg && (
+                <p className="text-sm text-green-600 text-center flex items-center justify-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {resendMsg}
+                </p>
+              )}
+
+              {/* Confirm Button */}
+              <Button
+                className="w-full"
+                onClick={handleVerify}
+                disabled={isVerifying || digits.join("").length < 6}
+                data-testid="button-confirm-code"
+              >
+                {isVerifying ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Verifying…</>
+                ) : (
+                  "Confirm & Continue"
+                )}
+              </Button>
+
+              {/* Resend */}
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-1">Didn't receive a code?</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResend}
+                  disabled={isResending}
+                  data-testid="button-resend-code"
+                  className="gap-2 text-primary"
+                >
+                  {isResending ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Sending…</>
+                  ) : (
+                    <><RefreshCw className="h-3 w-3" /> Resend code</>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Registration Form ───────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
@@ -193,14 +384,14 @@ export default function Register() {
                     <FormField control={form.control} name="email" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
-                        <FormControl><Input type="email" placeholder="john@example.com" {...field} /></FormControl>
+                        <FormControl><Input type="email" placeholder="john@example.com" data-testid="input-email" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="password" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Password</FormLabel>
-                        <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                        <FormControl><Input type="password" placeholder="••••••••" data-testid="input-password" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -216,11 +407,11 @@ export default function Register() {
                           className="flex flex-col sm:flex-row gap-4"
                         >
                           <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl><RadioGroupItem value="patient" /></FormControl>
+                            <FormControl><RadioGroupItem value="patient" data-testid="radio-patient" /></FormControl>
                             <FormLabel className="font-normal cursor-pointer">Patient (seeking care)</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl><RadioGroupItem value="doctor" /></FormControl>
+                            <FormControl><RadioGroupItem value="doctor" data-testid="radio-doctor" /></FormControl>
                             <FormLabel className="font-normal cursor-pointer">Doctor (providing care)</FormLabel>
                           </FormItem>
                         </RadioGroup>
@@ -237,7 +428,7 @@ export default function Register() {
                   <FormField control={form.control} name="fullName" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
-                      <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                      <FormControl><Input placeholder="John Doe" data-testid="input-fullname" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -247,7 +438,7 @@ export default function Register() {
                       <FormField control={form.control} name="age" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Age</FormLabel>
-                          <FormControl><Input type="number" placeholder="25" {...field} /></FormControl>
+                          <FormControl><Input type="number" placeholder="25" data-testid="input-age" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
@@ -256,7 +447,7 @@ export default function Register() {
                           <FormLabel>Gender</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                              <SelectTrigger data-testid="select-gender"><SelectValue placeholder="Select gender" /></SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="Male">Male</SelectItem>
@@ -270,7 +461,7 @@ export default function Register() {
                       <FormField control={form.control} name="contactNumber" render={({ field }) => (
                         <FormItem className="col-span-2">
                           <FormLabel>Contact Number</FormLabel>
-                          <FormControl><Input placeholder="+1 234 567 8900" {...field} /></FormControl>
+                          <FormControl><Input placeholder="+1 234 567 8900" data-testid="input-contact" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
@@ -285,7 +476,7 @@ export default function Register() {
                             <FormLabel>Specialization</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger>
+                                <SelectTrigger data-testid="select-specialization"><SelectValue placeholder="Select specialization" /></SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="Psychiatrist">Psychiatrist</SelectItem>
@@ -301,21 +492,21 @@ export default function Register() {
                         <FormField control={form.control} name="licenseNumber" render={({ field }) => (
                           <FormItem>
                             <FormLabel>License Number <span className="text-destructive">*</span></FormLabel>
-                            <FormControl><Input placeholder="LIC-12345" {...field} /></FormControl>
+                            <FormControl><Input placeholder="LIC-12345" data-testid="input-license" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="experience" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Years of Experience</FormLabel>
-                            <FormControl><Input type="number" placeholder="5" {...field} /></FormControl>
+                            <FormControl><Input type="number" placeholder="5" data-testid="input-experience" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField control={form.control} name="consultationFee" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Consultation Fee (Rs.)</FormLabel>
-                            <FormControl><Input type="number" placeholder="500" {...field} /></FormControl>
+                            <FormControl><Input type="number" placeholder="500" data-testid="input-fee" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -325,7 +516,7 @@ export default function Register() {
                         <FormItem>
                           <FormLabel>Bio / About (optional)</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Tell patients about your expertise and approach..." rows={3} {...field} />
+                            <Textarea placeholder="Tell patients about your expertise and approach..." rows={3} data-testid="textarea-bio" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -346,8 +537,12 @@ export default function Register() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isRegistering || uploadingProfile || uploadingLicense}>
-                  {isRegistering ? "Creating Account..." : "Create Account"}
+                <Button type="submit" className="w-full" data-testid="button-create-account" disabled={isRegistering || uploadingProfile || uploadingLicense}>
+                  {isRegistering ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Creating Account…</>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
 
                 <p className="text-center text-sm text-muted-foreground">
