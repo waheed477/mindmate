@@ -177,20 +177,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: credentials.email, password: credentials.password }),
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Login failed");
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 403 && data.requiresVerification) {
+        return { requiresVerification: true, email: data.email || credentials.email };
       }
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userRole", data.user.role);
       setUser(data.user);
-      alert(`✅ Welcome back, ${data.user.fullName}!`);
       redirectBasedOnRole(data.user.role);
       return data;
     } catch (error: any) {
-      alert(`Login failed: ${error.message}`);
       throw error;
     } finally {
       setIsLoggingIn(false);
