@@ -15,5 +15,5 @@ else
   echo "MongoDB already running."
 fi
 
-echo "Starting server..."
-cd backend && NODE_ENV=development PORT=5000 npx tsx server/index.ts
+echo "Starting backend API server..."
+cd backend && NODE_ENV=development PORT=3000 npx tsx server/index.ts

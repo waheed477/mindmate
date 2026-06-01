@@ -40,24 +40,13 @@ app.use("/api/ai", aiChatRoutes);
 (async () => {
   try {
     await connectDB();
-
     setupAuth(app);
     await registerRoutes(httpServer, app);
-
-    // Socket.io — must be after HTTP server is created
     setupSocket(httpServer);
 
-    if (process.env.NODE_ENV === "production") {
-      const { serveStatic } = await import("./static.js");
-      serveStatic(app);
-    } else {
-      const { setupVite } = await import("./vite.js");
-      await setupVite(httpServer, app);
-    }
-
-    const port = Number(process.env.PORT || 5000);
+    const port = Number(process.env.PORT || 3000);
     httpServer.listen(port, "0.0.0.0", () => {
-      console.log(`🚀 Server running on port ${port}`);
+      console.log(`🚀 Backend API running on port ${port}`);
       console.log("🔌 Socket.io enabled");
     });
 
