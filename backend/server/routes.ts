@@ -240,14 +240,6 @@ export async function registerRoutes(
     });
   });
 
-  // 404 handler
-  app.use((req, res) => {
-    res.status(404).json({ 
-      success: false, 
-      message: "Route not found" 
-    });
-  });
-
   // Error handler
   app.use((err: any, req: any, res: any, next: any) => {
     console.error("Server error:", err);

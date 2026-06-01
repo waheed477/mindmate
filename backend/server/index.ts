@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
 import { connectDB } from "./db";
 import { setupAuth } from "./auth";
 import { setupSocket } from "./socket";
@@ -49,10 +48,14 @@ app.use("/api/ai", aiChatRoutes);
     setupSocket(httpServer);
 
     if (process.env.NODE_ENV === "production") {
+      const { serveStatic } = await import("./static.js");
       serveStatic(app);
+    } else {
+      const { setupVite } = await import("./vite.js");
+      await setupVite(httpServer, app);
     }
 
-    const port = Number(process.env.PORT || 3000);
+    const port = Number(process.env.PORT || 5000);
     httpServer.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${port}`);
       console.log("🔌 Socket.io enabled");
