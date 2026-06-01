@@ -1,22 +1,24 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD,
-  },
-});
-
 const APP_NAME = "MindMate";
 const BASE_URL = process.env.FRONTEND_URL || "http://localhost:5000";
+
+function createTransporter() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_APP_PASSWORD,
+    },
+  });
+}
 
 export async function sendVerificationEmail(
   toEmail: string,
   fullName: string,
   code: string
 ): Promise<void> {
-  await transporter.sendMail({
+  await createTransporter().sendMail({
     from: `"${APP_NAME}" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: `${APP_NAME} — Verify your email`,
@@ -42,7 +44,7 @@ export async function sendPasswordResetEmail(
 ): Promise<void> {
   const resetLink = `${BASE_URL}/reset-password?token=${token}`;
 
-  await transporter.sendMail({
+  await createTransporter().sendMail({
     from: `"${APP_NAME}" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: `${APP_NAME} — Reset your password`,
