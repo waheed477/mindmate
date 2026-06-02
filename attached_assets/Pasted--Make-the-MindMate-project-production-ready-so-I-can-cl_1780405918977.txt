@@ -1,0 +1,116 @@
+ Make the MindMate project production ready so I can clone it and run it on my local VS Code without any errors. I will use local MongoDB (not Atlas).
+
+Current Issue:
+When I clone the repo and run it on VS Code, I get multiple errors (missing files, import issues, path problems). I need the code to be self-contained and error-free when run locally.
+
+Requirements:
+No missing files – All imports must resolve correctly
+
+No shared folder errors – Fix all @shared/ imports
+
+Local MongoDB – Use mongodb://localhost:27017/mindmate
+
+Clear documentation – Simple steps to run
+
+What Needs to be Fixed:
+Backend (backend/ folder):
+Create shared/schema.ts with all exports (insertDoctorSchema, insertPatientSchema, insertAppointmentSchema)
+
+Create shared/routes.ts with api, buildUrl exports
+
+Ensure server.ts or server/index.ts exists with correct path
+
+All package.json scripts must work locally:
+
+json
+"dev": "nodemon --exec ts-node server.ts"
+.env.example must have local MongoDB URI:
+
+text
+MONGODB_URI=mongodb://localhost:27017/mindmate
+PORT=5000
+JWT_SECRET=your_secret_key_here
+Frontend (frontend/ folder):
+package.json must have correct Vite scripts (no backend scripts)
+
+vite.config.ts must have correct @/ alias pointing to src
+
+.env.example must have:
+
+text
+VITE_API_URL=http://localhost:5000/api
+Root Level:
+Add .gitignore that excludes node_modules, .env, dist
+
+Add README.md with local setup instructions
+
+Local Setup Instructions to Include in README:
+markdown
+## Run MindMate Locally
+
+### Prerequisites:
+- Node.js 18+
+- MongoDB (running locally on port 27017)
+
+### Steps:
+
+1. Clone the repo
+2. cd backend && npm install
+3. cp .env.example .env
+4. npm run dev
+
+5. cd frontend && npm install
+6. cp .env.example .env
+7. npm run dev
+
+8. Open http://localhost:3000
+Files That Must be Present in the Repo:
+text
+mindmate/
+├── backend/
+│   ├── server.ts (or server/index.ts)
+│   ├── package.json
+│   ├── .env.example
+│   ├── tsconfig.json
+│   ├── shared/
+│   │   ├── schema.ts
+│   │   └── routes.ts
+│   ├── models/
+│   ├── controllers/
+│   ├── routes/
+│   ├── middleware/
+│   └── utils/
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   ├── .env.example
+│   ├── index.html
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── index.css
+│       ├── components/
+│       ├── pages/
+│       └── hooks/
+├── .gitignore
+└── README.md
+Test Before Saying Done:
+Run these commands and ensure NO errors:
+
+bash
+# Clone fresh
+git clone <repo-url> test-mindmate
+cd test-mindmate
+
+# Backend
+cd backend
+npm install
+npm run dev
+# Should show: Server running on port 5000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+# Should show: VITE ready on port 3000

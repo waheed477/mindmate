@@ -1,28 +1,22 @@
 {
-  "include": ["src/**/*"],
+  "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"],
   "compilerOptions": {
-    "incremental": true,
-    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo",
-    "noEmit": true,
+    "target": "ES2020",
     "module": "ESNext",
-    "strict": true,
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx", 
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": ["ESNext"],
+    "types": ["node"],
     "baseUrl": ".",
-    "types": ["node", "vite/client"],
     "paths": {
-      "@/*": ["src/*"],
-      "@lib/*": ["src/lib/*"],
-      "@components/*": ["src/components/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@pages/*": ["src/pages/*"]
+      "@shared/*": ["shared/*"]
     }
   }
 }

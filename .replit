@@ -53,3 +53,5 @@ build = ["npm", "run", "build"]
 NODE_ENV = "development"
 PORT = "3001"
 MONGODB_URI = "mongodb://127.0.0.1:27017/mindmate?directConnection=true"
+VITE_PORT = "5000"
+BACKEND_URL = "http://127.0.0.1:3001"

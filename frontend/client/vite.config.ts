@@ -3,11 +3,12 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+const devPort = Number(process.env.VITE_PORT) || 3000;
+
 export default defineConfig({
   plugins: [
-    react({
-      jsxRuntime: "automatic",
-    }),
+    react({ jsxRuntime: "automatic" }),
     tailwindcss(),
   ],
   resolve: {
@@ -23,17 +24,17 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 5000,
+    port: devPort,
     strictPort: true,
     allowedHosts: true,
     hmr: false,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:3001",
+        target: backendUrl,
         changeOrigin: true,
       },
       "/socket.io": {
-        target: "http://127.0.0.1:3001",
+        target: backendUrl,
         changeOrigin: true,
         ws: true,
       },
