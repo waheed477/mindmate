@@ -1,54 +1,95 @@
-import mongoose from "mongoose";
-import { Doctor } from "./models/Doctor";
-import { User } from "./models/User";
+import { User } from "./models/User.js";
+import { Doctor } from "./models/Doctor.js";
+import { Patient } from "./models/Patient.js";
+
+const TEST_ACCOUNTS = [
+  {
+    email: "patient@test.com",
+    password: "123456",
+    fullName: "Alex Johnson",
+    role: "patient" as const,
+    profile: {
+      age: 28,
+      gender: "Male",
+      contactNumber: "+1 555-0100",
+    },
+  },
+  {
+    email: "doctor@test.com",
+    password: "123456",
+    fullName: "Dr. Sarah Williams",
+    role: "doctor" as const,
+    profile: {
+      specialization: "Psychiatrist",
+      licenseNumber: "PSY-2024-001",
+      experience: 8,
+      consultationFee: 150,
+      bio: "Board-certified psychiatrist with 8 years of experience in anxiety, depression, and mood disorders.",
+      verificationStatus: "verified",
+    },
+  },
+  {
+    email: "doctor2@test.com",
+    password: "123456",
+    fullName: "Dr. Michael Chen",
+    role: "doctor" as const,
+    profile: {
+      specialization: "Psychologist",
+      licenseNumber: "PSY-2024-002",
+      experience: 12,
+      consultationFee: 120,
+      bio: "Clinical psychologist specialising in cognitive-behavioural therapy for stress and trauma.",
+      verificationStatus: "verified",
+    },
+  },
+];
 
 export async function seedDatabase() {
-  console.log("Starting database seeding...");
+  let created = 0;
 
-  try {
-    // First create users - FIX: Your User model uses 'username' not 'email'
-    const user1 = await User.create({
-      username: "doctor1@example.com",  // CHANGE: email → username
-      password: "password123",
-      role: "doctor"
-      // REMOVE: fullName (not in your User schema)
+  for (const account of TEST_ACCOUNTS) {
+    const exists = await User.findOne({ email: account.email });
+    if (exists) continue;
+
+    const user = await User.create({
+      username: account.email,
+      email: account.email,
+      password: account.password,
+      fullName: account.fullName,
+      role: account.role,
+      isEmailVerified: true,
     });
 
-    const user2 = await User.create({
-      username: "doctor2@example.com",  // CHANGE: email → username
-      password: "password123",
-      role: "doctor"
-      // REMOVE: fullName (not in your User schema)
-    });
+    if (account.role === "doctor") {
+      const p = account.profile as any;
+      await Doctor.create({
+        userId: user._id,
+        fullName: account.fullName,
+        specialization: p.specialization,
+        licenseNumber: p.licenseNumber,
+        experience: p.experience,
+        consultationFee: p.consultationFee,
+        bio: p.bio,
+        verificationStatus: p.verificationStatus,
+      });
+    } else {
+      const p = account.profile as any;
+      await Patient.create({
+        userId: user._id,
+        fullName: account.fullName,
+        age: p.age,
+        gender: p.gender,
+        contactNumber: p.contactNumber,
+      });
+    }
 
-    // Then create doctors with userIds
-    await Doctor.create([
-      {
-        userId: user1._id,
-        fullName: "Dr. John Smith",  // fullName goes in Doctor, not User
-        specialization: "Psychiatrist",
-        licenseNumber: "MED12345",
-        bio: "Experienced psychiatrist",
-        experience: 10,
-        consultationFee: 150,
-        verificationStatus: "verified",
-        rating: 4.8
-      },
-      {
-        userId: user2._id,
-        fullName: "Dr. Sarah Johnson",  // fullName goes in Doctor, not User
-        specialization: "Psychologist",
-        licenseNumber: "PSY67890",
-        bio: "Clinical psychologist",
-        experience: 8,
-        consultationFee: 120,
-        verificationStatus: "verified",
-        rating: 4.6
-      }
-    ]);
+    created++;
+  }
 
-    console.log("Database seeded successfully!");
-  } catch (error) {
-    console.error("Seeding error:", error);
+  if (created > 0) {
+    console.log(`\n✅ Seeded ${created} test account(s):`);
+    console.log("   👤 patient@test.com  /  123456  (Patient)");
+    console.log("   🩺 doctor@test.com   /  123456  (Doctor)");
+    console.log("   🩺 doctor2@test.com  /  123456  (Doctor)\n");
   }
 }

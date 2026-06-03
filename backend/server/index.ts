@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { connectDB } from "./db";
 import { setupAuth } from "./auth";
 import { setupSocket } from "./socket";
+import { seedDatabase } from "./seed";
 import appointmentRoutes from "./routes/appointments";
 import messageRoutes from "./routes/messages";
 import prescriptionRoutes from "./routes/prescriptions";
@@ -43,6 +44,11 @@ app.use("/api/ai", aiChatRoutes);
     setupAuth(app);
     await registerRoutes(httpServer, app);
     setupSocket(httpServer);
+
+    // Auto-seed test accounts in development
+    if (process.env.NODE_ENV !== "production") {
+      await seedDatabase();
+    }
 
     const port = Number(process.env.PORT || 5000);
     httpServer.listen(port, "0.0.0.0", () => {

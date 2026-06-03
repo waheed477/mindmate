@@ -19,4 +19,4 @@ done
 # ── Vite on port 5000 (webview — proxies /api to Express on 3001) ──────────────
 echo "[frontend] starting Vite on port 5000..."
 cd frontend/client
-exec npx vite --host 0.0.0.0 --port 5000
+BACKEND_URL=http://localhost:3001 exec npx vite --host 0.0.0.0 --port 5000
