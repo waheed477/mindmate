@@ -52,8 +52,14 @@ export default function Login() {
     try {
       const result = await login({ ...data, userType });
       if (result?.requiresVerification) {
-        setPendingEmail(result.email || data.email);
+        const email = result.email || data.email;
+        setPendingEmail(email);
         setStep("verify");
+        // Auto-send a fresh verification code
+        try {
+          await resendVerification(email);
+          setResendMsg("A verification code has been sent to your email.");
+        } catch (_) {}
       }
     } catch (error: any) {
       setLoginError(error.message || "Login failed. Please try again.");
@@ -94,11 +100,12 @@ export default function Login() {
     setIsVerifying(true);
     setVerifyError("");
     try {
-      await verifyEmail(pendingEmail, code);
-      navigate("/login");
-      setStep("login");
-      setDigits(["", "", "", "", "", ""]);
-      form.reset();
+      const result = await verifyEmail(pendingEmail, code);
+      if (result?.user?.role === "doctor") {
+        navigate("/doctor/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       setVerifyError(err.message || "Invalid code. Please try again.");
       setDigits(["", "", "", "", "", ""]);

@@ -155,6 +155,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.message || "Verification failed");
+    if (result.token && result.user) {
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("user", JSON.stringify(result.user));
+      localStorage.setItem("userRole", result.user.role);
+      setUser(result.user);
+    }
     return result;
   };
 

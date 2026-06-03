@@ -196,8 +196,12 @@ export default function Register() {
     setIsVerifying(true);
     setVerifyError("");
     try {
-      await verifyEmail(pendingEmail, code);
-      navigate("/login", { state: { verified: true } });
+      const result = await verifyEmail(pendingEmail, code);
+      if (result?.user?.role === "doctor") {
+        navigate("/doctor/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       setVerifyError(err.message || "Invalid code. Please try again.");
       setDigits(["", "", "", "", "", ""]);
