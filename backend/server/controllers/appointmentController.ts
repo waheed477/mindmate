@@ -85,6 +85,25 @@ export const createAppointment = async (req: Request, res: Response) => {
       .populate("doctor", "fullName specialization consultationFee verificationStatus userId")
       .populate("patient", "fullName age gender contactNumber userId");
 
+    // Notify the doctor in real-time about the new booking
+    try {
+      const io = getIO();
+      const doctorUserId = typeof doctor.userId === "object"
+        ? String((doctor.userId as any)._id ?? doctor.userId)
+        : String(doctor.userId ?? "");
+      if (doctorUserId) {
+        io.to(`user_${doctorUserId}`).emit("new_appointment", {
+          type: "new_appointment",
+          appointmentId: String(appointment._id),
+          patientName: patient.fullName || "A patient",
+          date: appointmentDateTime.toLocaleDateString("en-US", { dateStyle: "medium" }),
+          message: `New appointment request from ${patient.fullName || "a patient"} on ${appointmentDateTime.toLocaleDateString("en-US", { dateStyle: "medium" })}.`,
+        });
+      }
+    } catch (socketErr) {
+      console.warn("[Socket] Failed to emit new_appointment notification:", socketErr);
+    }
+
     res.status(201).json({
       success: true,
       message: "Appointment request sent successfully",
