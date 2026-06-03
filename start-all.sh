@@ -1,6 +1,7 @@
 #!/bin/bash
 
-BACKEND_LOG="/home/runner/data/backend.log"
+BACKEND_LOG="/tmp/backend.log"
+mkdir -p /tmp
 
 # ── Express backend + in-memory MongoDB ────────────────────────────────────────
 echo "[backend] starting with in-memory MongoDB on port 3001..."
