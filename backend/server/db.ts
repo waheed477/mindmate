@@ -1,5 +1,8 @@
 ﻿import mongoose from "mongoose";
 
+// ✅ FIX DEPRECATION WARNING
+mongoose.set('strictQuery', true);
+
 // Use IPv4 explicitly
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mindmate?directConnection=true";
 

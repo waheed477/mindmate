@@ -1,7 +1,7 @@
 import express from "express";
-import { authenticate } from "../auth.js";
+import { authenticate } from "../../middleware/auth.js";
 import { Prescription } from "../models/Prescription.js";
-import { User } from "../models/User.js";
+import { User } from "../../models/User.ts";
 import { getIO } from "../socket.js";
 
 const router = express.Router();

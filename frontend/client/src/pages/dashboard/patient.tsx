@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useDoctors, Doctor } from "@/hooks/use-doctors";
 import { useQueryClient } from "@tanstack/react-query";
+// FIXED: Added getToken helper function
+const getToken = (): string | null => {
+  return localStorage.getItem('token');
+};
 import { useSocket } from "@/hooks/use-socket";
 import {
   useAppointments,
@@ -52,7 +56,7 @@ import { CreateAppointmentData } from "@/types/appointment";
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
-  const { user, getToken } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { on, off } = useSocket(getToken());
   const { data: doctors = [], isLoading: doctorsLoading } = useDoctors();

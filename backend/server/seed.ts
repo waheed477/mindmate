@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Doctor } from "./models/Doctor";
-import { User } from "./models/User";
+import { User } from "../models/User.ts";
 
 export async function seedDatabase() {
   console.log("Starting database seeding...");

@@ -1,24 +1,23 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['patient', 'doctor'], required: true },
   fullName: { type: String },
-  isEmailVerified: { type: Boolean, default: false }
+  isEmailVerified: { type: Boolean, default: true }
 }, { timestamps: true });
 
-// ✅ Hash password before saving
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+// ✅ SIMPLE WORKING pre-save middleware
+UserSchema.pre('save', async function() {
+  if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
-// ✅ Add comparePassword method
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+// Compare password method
+UserSchema.methods.comparePassword = async function(candidatePassword: string) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 

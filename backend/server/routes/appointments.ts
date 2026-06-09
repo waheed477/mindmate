@@ -1,7 +1,6 @@
-// server/routes/appointments.ts
 import express from "express";
-import { authenticate } from "../auth";
-import { Doctor } from "../models/Doctor.js";
+import { auth } from "../../middleware/auth.ts";
+import { Doctor } from "../../models/Doctor.ts";
 import {
   createAppointment,
   getAppointments,
@@ -10,12 +9,11 @@ import {
   deleteAppointment,
   getDoctorAppointments,
   getPatientAppointments
-} from "../controllers/appointmentController.js";
+} from "../../controllers/appointmentController.ts";
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticate);
+router.use(auth);
 
 const ensureDoctorProfileExists = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
@@ -46,28 +44,12 @@ const ensureDoctorProfileExists = async (req: express.Request, res: express.Resp
   }
 };
 
-// Create appointment (Patient only)
 router.post("/", createAppointment);
-
-// Get all appointments (Admin/Doctor)
 router.get("/", getAppointments);
-
-// Get appointments for current user
-router.get("/my-appointments", getAppointments);
-
-// Get doctor's appointments
 router.get("/doctor/:doctorId", ensureDoctorProfileExists, getDoctorAppointments);
-
-// Get patient's appointments  
 router.get("/patient/:patientId", getPatientAppointments);
-
-// Get single appointment
 router.get("/:id", getAppointmentById);
-
-// Update appointment (Status, notes, etc.)
 router.patch("/:id", updateAppointment);
-
-// Delete appointment
 router.delete("/:id", deleteAppointment);
 
 export default router;

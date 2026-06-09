@@ -1,344 +1,146 @@
-import { useState, useEffect, createContext, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import api from '@/services/api';
 
-export interface User {
+interface User {
   id: string;
   email: string;
-  username: string;
-  role: "patient" | "doctor";
-  fullName: string;
-  profilePicture?: string;
-  patientProfileId?: string;
-  doctorProfileId?: string;
-  patient?: {
-    _id: string;
-    fullName: string;
-    age?: number;
-    gender?: string;
-    contactNumber?: string;
-    profilePicture?: string;
-    address?: string;
-    emergencyContact?: string;
-    medicalHistory?: string;
-  };
-  doctor?: {
-    _id: string;
-    fullName: string;
-    specialization?: string;
-    verificationStatus?: string;
-    consultationFee?: number;
-    profilePicture?: string;
-    bio?: string;
-    qualification?: string;
-    experience?: number;
-    licenseNumber?: string;
-  };
+  role: 'patient' | 'doctor';
+  fullName?: string;
+  doctorId?: string;
+  patientId?: string;
+  specialization?: string;
+  consultationFee?: number;
+  condition?: string;
 }
 
-interface AuthContextValue {
+interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  isLoggingIn: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  register: (data: any) => Promise<{ success: boolean; requiresVerification?: boolean }>;
+  logout: () => void;
   isRegistering: boolean;
-  verifyEmail: (email: string, code: string) => Promise<any>;
-  resendVerification: (email: string) => Promise<any>;
-  login: (credentials: { email: string; password: string; userType?: string }) => Promise<any>;
-  register: (data: {
-    email: string;
-    password: string;
-    name: string;
-    role?: string;
-    age?: number;
-    gender?: string;
-    contactNumber?: string;
-    specialization?: string;
-    licenseNumber?: string;
-    experience?: number;
-    consultationFee?: number;
-    bio?: string;
-    profilePicture?: string;
-    licensePicture?: string;
-  }) => Promise<any>;
-  logout: () => Promise<void>;
-  updateProfile: (updates: {
-    fullName?: string;
-    profilePicture?: string;
-    age?: number;
-    gender?: string;
-    contactNumber?: string;
-    address?: string;
-    emergencyContact?: string;
-    medicalHistory?: string;
-    specialization?: string;
-    qualification?: string;
-    experience?: number;
-    consultationFee?: number;
-    bio?: string;
-    licenseNumber?: string;
-    licensePicture?: string;
-    hospitalAffiliation?: string;
-  }) => Promise<any>;
-  deleteAccount: (password: string) => Promise<void>;
-  refreshUser: () => Promise<void>;
-  getToken: () => string | null;
-  isAuthenticated: () => boolean;
-  getUserRole: () => string | null | undefined;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE = "";
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const navigate = useNavigate();
 
-  const redirectBasedOnRole = (role: string) => {
-    if (role === "doctor") {
-      navigate("/doctor/dashboard");
-    } else {
-      navigate("/dashboard");
-    }
-  };
-
-  const refreshUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/me`, {
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-    } catch (error) {
-      console.error("Refresh user error:", error);
-    }
-  };
-
+  // Load user from token on app start
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) { setIsLoading(false); return; }
+    const loadUser = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
+        const response = await api.get('/auth/me');
+        if (response.data.success) {
+          setUser(response.data.user);
         } else {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+          localStorage.removeItem('token');
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        console.error('Load user error:', error);
+        localStorage.removeItem('token');
       } finally {
         setIsLoading(false);
       }
     };
-    checkAuth();
+
+    loadUser();
   }, []);
 
-  const verifyEmail = async (email: string, code: string) => {
-    const response = await fetch(`${API_BASE}/api/auth/verify-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.message || "Verification failed");
-    return result;
-  };
-
-  const resendVerification = async (email: string) => {
-    const response = await fetch(`${API_BASE}/api/auth/resend-verification`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.message || "Failed to resend code");
-    return result;
-  };
-
-  const login = async (credentials: { email: string; password: string; userType?: string }) => {
-    setIsLoggingIn(true);
+  // FIXED: Login function - sends ONLY email and password (no extra fields)
+  const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: credentials.email, password: credentials.password }),
+      console.log("Login attempt for:", email);
+      
+      // ✅ Send ONLY email and password (no extra fields)
+      const response = await api.post('/auth/login', { 
+        email: email, 
+        password: password 
       });
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 403 && data.requiresVerification) {
-        return { requiresVerification: true, email: data.email || credentials.email };
+      
+      console.log("Login response:", response.data);
+      
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        setUser(response.data.user);
+        return { success: true };
+      } else {
+        return { success: false, message: response.data.message };
       }
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("userRole", data.user.role);
-      setUser(data.user);
-      redirectBasedOnRole(data.user.role);
-      return data;
     } catch (error: any) {
-      throw error;
-    } finally {
-      setIsLoggingIn(false);
+      console.error("Login error:", error);
+      const message = error.response?.data?.message || 'Login failed. Please try again.';
+      return { success: false, message };
     }
   };
 
-  const register = async (data: {
-    email: string;
-    password: string;
-    name: string;
-    role?: string;
-    age?: number;
-    gender?: string;
-    contactNumber?: string;
-    specialization?: string;
-    licenseNumber?: string;
-    experience?: number;
-    consultationFee?: number;
-    bio?: string;
-    profilePicture?: string;
-    licensePicture?: string;
-  }) => {
+  // Register function
+  const register = async (data: any): Promise<any> => {
     setIsRegistering(true);
     try {
-      const response = await fetch(`${API_BASE}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, role: data.role || "patient" }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Registration failed");
+      const endpoint = data.role === 'patient' ? '/auth/register/patient' : '/auth/register/doctor';
+      
+      // Format payload for backend
+      const payload: any = {
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName,
+        role: data.role,
+      };
+
+      if (data.role === 'doctor') {
+        payload.specialization = data.specialization;
+        payload.licenseNumber = data.licenseNumber;
+        payload.consultationFee = data.consultationFee;
+        payload.experience = data.experience || 0;
+      } else {
+        payload.age = data.age;
+        payload.condition = data.condition;
+        payload.contact = data.contact;
       }
-      const result = await response.json();
-      return result;
+
+      const response = await api.post(endpoint, payload);
+      
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        setUser(response.data.user);
+        return { success: true };
+      }
+      return response.data;
     } catch (error: any) {
-      alert(`Registration failed: ${error.message}`);
+      console.error('Register error:', error);
       throw error;
     } finally {
       setIsRegistering(false);
     }
   };
 
-  const updateProfile = async (updates: {
-    fullName?: string;
-    profilePicture?: string;
-    age?: number;
-    gender?: string;
-    contactNumber?: string;
-    address?: string;
-    emergencyContact?: string;
-    medicalHistory?: string;
-    specialization?: string;
-    qualification?: string;
-    experience?: number;
-    consultationFee?: number;
-    bio?: string;
-    licenseNumber?: string;
-    licensePicture?: string;
-    hospitalAffiliation?: string;
-  }) => {
-    const token = localStorage.getItem("token");
-    if (!token || !user) throw new Error("Not authenticated");
-
-    const endpoint = user.role === "doctor" ? "/api/profile/doctor" : "/api/profile/patient";
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      method: "PUT",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    });
-
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error((result as any).message || "Failed to update profile");
-    }
-
-    await refreshUser();
-    return result;
-  };
-
-  const deleteAccount = async (password: string) => {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("Not authenticated");
-    const response = await fetch(`${API_BASE}/api/profile/account`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to delete account");
-    }
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
+  // Logout function
+  const logout = () => {
+    localStorage.removeItem('token');
     setUser(null);
-    navigate("/");
   };
-
-  const logout = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        await fetch(`${API_BASE}/api/auth/logout`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("userRole");
-      setUser(null);
-      navigate("/");
-    }
-  };
-
-  const getToken = () => localStorage.getItem("token");
-  const isAuthenticated = () => !!localStorage.getItem("token");
-  const getUserRole = () => user?.role || localStorage.getItem("userRole");
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      isLoggingIn,
-      isRegistering,
-      verifyEmail,
-      resendVerification,
-      login,
-      register,
-      logout,
-      updateProfile,
-      deleteAccount,
-      refreshUser,
-      getToken,
-      isAuthenticated,
-      getUserRole,
-    }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, isRegistering }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
 }

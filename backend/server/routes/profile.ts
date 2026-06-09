@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { authenticate } from "../auth.js";
-import { User } from "../models/User.js";
+import { authenticate } from "../../middleware/auth.js";
+import { User } from "../../models/User.ts";
 import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
 import { Appointment } from "../models/Appointment.js";

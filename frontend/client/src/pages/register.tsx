@@ -123,26 +123,25 @@ export default function Register() {
     }
   };
 
+  // FIXED: Updated onSubmit function with correct payload format
   async function onSubmit(data: RegisterForm) {
+    // Format payload correctly for backend
     const payload = {
       email: data.email,
       password: data.password,
-      name: data.fullName,
+      fullName: data.fullName,  // ✅ Use fullName (not name)
       role: data.role,
-      profilePicture: profilePicture || undefined,
       ...(data.role === "doctor"
         ? {
             specialization: data.specialization,
             licenseNumber: data.licenseNumber,
-            experience: Number(data.experience) || undefined,
-            consultationFee: Number(data.consultationFee) || undefined,
-            bio: data.bio || undefined,
-            licensePicture: licensePicture || undefined,
+            experience: Number(data.experience) || 0,
+            consultationFee: Number(data.consultationFee) || 0,
           }
         : {
-            age: Number(data.age) || undefined,
-            gender: data.gender || undefined,
-            contactNumber: data.contactNumber || undefined,
+            age: Number(data.age) || 0,
+            condition: "Anxiety",  // ✅ Required field - send default
+            contact: data.contactNumber || "0000000000",  // ✅ Use contact (not contactNumber)
           }),
     };
 

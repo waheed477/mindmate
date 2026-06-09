@@ -3,7 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { connectDB } from "./db";
-import { setupAuth } from "./auth";
+import authRouter from "./auth.js";
 import { setupSocket } from "./socket";
 import appointmentRoutes from "./routes/appointments";
 import messageRoutes from "./routes/messages";
@@ -15,9 +15,9 @@ import doctorRoutes from "./routes/doctors.js";
 const app = express();
 const httpServer = createServer(app);
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// ✅ FIX: Increase payload limits to 10MB
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS — allow all origins (Replit proxy + local dev)
 app.use((req, res, next) => {
@@ -28,6 +28,9 @@ app.use((req, res, next) => {
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
+
+// Auth routes (must be before other routes)
+app.use("/api/auth", authRouter);
 
 // API Routes
 app.use("/api/doctors", doctorRoutes);
@@ -40,7 +43,6 @@ app.use("/api/ai", aiChatRoutes);
 (async () => {
   try {
     await connectDB();
-    setupAuth(app);
     await registerRoutes(httpServer, app);
     setupSocket(httpServer);
 

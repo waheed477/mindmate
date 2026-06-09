@@ -5,7 +5,8 @@ import { useAuth, AuthProvider } from "@hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { queryClient } from "@lib/queryClient";
 import { Footer } from "@components/layout-footer";
-import { NotificationProvider } from "@hooks/use-notifications";
+// FIXED: Added .tsx extension to import
+import { NotificationProvider } from "@/hooks/use-notifications.tsx";
 
 import NotFound from "@pages/not-found";
 import Home from "@pages/home";
@@ -39,36 +40,37 @@ function ProtectedRoute({ children, allowedRole }: { children: React.ReactNode, 
   return <>{children}</>;
 }
 
+// FIXED: Correct provider order - AuthProvider then NotificationProvider
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
-        <NotificationProvider>
-        <div className="flex flex-col min-h-screen">
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomeOrRedirect />} />
-              <Route path="/login" element={<LoginOrRedirect />} />
-              <Route path="/register" element={<RegisterOrRedirect />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
+          <NotificationProvider>
+            <div className="flex flex-col min-h-screen">
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<HomeOrRedirect />} />
+                  <Route path="/login" element={<LoginOrRedirect />} />
+                  <Route path="/register" element={<RegisterOrRedirect />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
 
-              <Route path="/doctors" element={<ProtectedRoute allowedRole="patient"><DoctorsList /></ProtectedRoute>} />
-              <Route path="/doctors/:id" element={<ProtectedRoute allowedRole="patient"><DoctorProfile /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute allowedRole="patient"><PatientDashboard /></ProtectedRoute>} />
-              <Route path="/doctor/dashboard" element={<ProtectedRoute allowedRole="doctor"><DoctorDashboard /></ProtectedRoute>} />
-              <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-              <Route path="/chat/:receiverId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-              <Route path="/ai-assistant" element={<ProtectedRoute allowedRole="patient"><AIAssistant /></ProtectedRoute>} />
+                  <Route path="/doctors" element={<ProtectedRoute allowedRole="patient"><DoctorsList /></ProtectedRoute>} />
+                  <Route path="/doctors/:id" element={<ProtectedRoute allowedRole="patient"><DoctorProfile /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute allowedRole="patient"><PatientDashboard /></ProtectedRoute>} />
+                  <Route path="/doctor/dashboard" element={<ProtectedRoute allowedRole="doctor"><DoctorDashboard /></ProtectedRoute>} />
+                  <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                  <Route path="/chat/:receiverId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+                  <Route path="/ai-assistant" element={<ProtectedRoute allowedRole="patient"><AIAssistant /></ProtectedRoute>} />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-        <Toaster />
-        </NotificationProvider>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+            <Toaster />
+          </NotificationProvider>
         </AuthProvider>
       </Router>
     </QueryClientProvider>

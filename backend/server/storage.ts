@@ -1,7 +1,7 @@
 import { Doctor } from "./models/Doctor";
 import { Patient } from "./models/Patient";
 import { Appointment } from "./models/Appointment";
-import { User } from "./models/User";
+import { User } from "../models/User.ts";
 import { Message } from "./models/Message";
 
 interface DoctorFilters {

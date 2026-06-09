@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+// FIXED: Added getToken helper function
+const getToken = (): string | null => {
+  return localStorage.getItem('token');
+};
 import { useDoctorAppointments, useUpdateAppointment } from "@/hooks/use-appointments";
 import { useDoctorPrescriptions, useCreatePrescription, Medicine } from "@/hooks/use-prescriptions";
 import { Navbar } from "@/components/layout-navbar";
@@ -61,7 +65,7 @@ export default function DoctorDashboard() {
   const { data: patientInteractions = [], isLoading: patientsLoading } = useQuery({
     queryKey: ["doctor-patients"],
     queryFn: async () => {
-      const token = localStorage.getItem("token") ?? "";
+      const token = getToken() ?? "";
       const res = await fetch("/api/messages/doctor/patients", {
         headers: { Authorization: `Bearer ${token}` },
       });

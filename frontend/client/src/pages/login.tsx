@@ -31,6 +31,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [userType, setUserType] = useState<"patient" | "doctor">("patient");
   const [loginError, setLoginError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Verify step state
   const [step, setStep] = useState<Step>("login");
@@ -47,18 +48,25 @@ export default function Login() {
     defaultValues: { email: "", password: "" },
   });
 
-  async function onSubmit(data: LoginForm) {
+  // FIXED: Updated onSubmit function - send ONLY email and password (NO userType)
+  const onSubmit = async (data: { email: string; password: string }) => {
+    setIsLoading(true);
     setLoginError("");
     try {
-      const result = await login({ ...data, userType });
-      if (result?.requiresVerification) {
-        setPendingEmail(result.email || data.email);
-        setStep("verify");
+      // ✅ Send ONLY email and password (NO userType)
+      const result = await login(data.email, data.password);
+      
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setLoginError(result.message || 'Login failed. Please try again.');
       }
-    } catch (error: any) {
-      setLoginError(error.message || "Login failed. Please try again.");
+    } catch (err) {
+      setLoginError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   // ── OTP handlers ────────────────────────────────────────────────────────────
 
@@ -328,8 +336,8 @@ export default function Login() {
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full" data-testid="button-login" disabled={isLoggingIn}>
-                    {isLoggingIn ? (
+                  <Button type="submit" className="w-full" data-testid="button-login" disabled={isLoading || isLoggingIn}>
+                    {isLoading || isLoggingIn ? (
                       <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in…</>
                     ) : (
                       <div className="flex items-center justify-center gap-2">
