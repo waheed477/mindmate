@@ -53,6 +53,7 @@ export default function Login() {
     setIsLoading(true);
     setLoginError("");
     try {
+<<<<<<< HEAD
       // ✅ Send ONLY email and password (NO userType)
       const result = await login(data.email, data.password);
       
@@ -60,6 +61,18 @@ export default function Login() {
         navigate('/dashboard');
       } else {
         setLoginError(result.message || 'Login failed. Please try again.');
+=======
+      const result = await login({ ...data, userType });
+      if (result?.requiresVerification) {
+        const email = result.email || data.email;
+        setPendingEmail(email);
+        setStep("verify");
+        // Auto-send a fresh verification code
+        try {
+          await resendVerification(email);
+          setResendMsg("A verification code has been sent to your email.");
+        } catch (_) {}
+>>>>>>> 2e3d8ce5b71538475f6cd78de28b09d49eb45f0a
       }
     } catch (err) {
       setLoginError('An error occurred. Please try again.');
@@ -102,11 +115,12 @@ export default function Login() {
     setIsVerifying(true);
     setVerifyError("");
     try {
-      await verifyEmail(pendingEmail, code);
-      navigate("/login");
-      setStep("login");
-      setDigits(["", "", "", "", "", ""]);
-      form.reset();
+      const result = await verifyEmail(pendingEmail, code);
+      if (result?.user?.role === "doctor") {
+        navigate("/doctor/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       setVerifyError(err.message || "Invalid code. Please try again.");
       setDigits(["", "", "", "", "", ""]);

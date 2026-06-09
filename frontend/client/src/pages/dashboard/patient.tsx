@@ -72,6 +72,18 @@ export default function PatientDashboard() {
     };
   }, [on, off, queryClient]);
 
+  // Refresh appointments in real-time when doctor accepts/rejects/completes
+  useEffect(() => {
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+    };
+    const cleanup = on("appointment_notification", handler);
+    return () => {
+      if (typeof cleanup === "function") cleanup();
+      else off("appointment_notification", handler);
+    };
+  }, [on, off, queryClient]);
+
   const { data: appointments = [], isLoading: appointmentsLoading } = useAppointments();
   const { mutate: createAppointment, isPending: isCreating } = useCreateAppointment();
   const { mutate: updateAppointment } = useUpdateAppointment();

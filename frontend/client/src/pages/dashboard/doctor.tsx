@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+<<<<<<< HEAD
 // FIXED: Added getToken helper function
 const getToken = (): string | null => {
   return localStorage.getItem('token');
 };
+=======
+import { useSocket } from "@/hooks/use-socket";
+>>>>>>> 2e3d8ce5b71538475f6cd78de28b09d49eb45f0a
 import { useDoctorAppointments, useUpdateAppointment } from "@/hooks/use-appointments";
 import { useDoctorPrescriptions, useCreatePrescription, Medicine } from "@/hooks/use-prescriptions";
 import { Navbar } from "@/components/layout-navbar";
@@ -48,13 +52,29 @@ const EMPTY_MEDICINE: Medicine = { name: "", dosage: "", duration: "", instructi
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const { on, off } = useSocket(getToken());
 
   const doctorProfileId: string =
     (user as any)?.doctorProfileId ||
     (user as any)?.doctor?._id ||
     (user as any)?.id ||
     "";
+
+  // Refresh appointments + patient list in real-time when a new booking or status change occurs
+  useEffect(() => {
+    const refreshAll = () => {
+      queryClient.invalidateQueries({ queryKey: ["doctor-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+    };
+    const c1 = on("appointment_notification", refreshAll);
+    const c2 = on("new_appointment", refreshAll);
+    return () => {
+      if (typeof c1 === "function") c1(); else off("appointment_notification", refreshAll);
+      if (typeof c2 === "function") c2(); else off("new_appointment", refreshAll);
+    };
+  }, [on, off, queryClient]);
 
   const { data: appointments = [], isLoading } = useDoctorAppointments(doctorProfileId);
   const { mutate: updateAppointment, isPending: isUpdating } = useUpdateAppointment();

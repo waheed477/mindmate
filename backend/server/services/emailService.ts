@@ -18,6 +18,17 @@ export async function sendVerificationEmail(
   fullName: string,
   code: string
 ): Promise<void> {
+  // Always log in dev so you can verify without waiting for email delivery
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`\n📧 [DEV] Verification code for ${toEmail}: ${code}\n`);
+  }
+
+  // Skip actual send if email credentials aren't configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+    console.warn("[Email] EMAIL_USER / EMAIL_APP_PASSWORD not set — skipping real send.");
+    return;
+  }
+
   await createTransporter().sendMail({
     from: `"${APP_NAME}" <${process.env.EMAIL_USER}>`,
     to: toEmail,

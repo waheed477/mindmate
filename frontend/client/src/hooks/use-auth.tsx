@@ -56,8 +56,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
+<<<<<<< HEAD
   // FIXED: Login function - sends ONLY email and password (no extra fields)
   const login = async (email: string, password: string) => {
+=======
+  const verifyEmail = async (email: string, code: string) => {
+    const response = await fetch(`${API_BASE}/api/auth/verify-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || "Verification failed");
+    if (result.token && result.user) {
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("user", JSON.stringify(result.user));
+      localStorage.setItem("userRole", result.user.role);
+      setUser(result.user);
+    }
+    return result;
+  };
+
+  const resendVerification = async (email: string) => {
+    const response = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || "Failed to resend code");
+    return result;
+  };
+
+  const login = async (credentials: { email: string; password: string; userType?: string }) => {
+    setIsLoggingIn(true);
+>>>>>>> 2e3d8ce5b71538475f6cd78de28b09d49eb45f0a
     try {
       console.log("Login attempt for:", email);
       
