@@ -1,0 +1,19 @@
+node_modules
+dist
+.DS_Store
+*.tar.gz
+.env
+build/
+*.log
+
+# Replit platform files — not part of the codebase
+.replit
+replit.nix
+.cache/
+.config/
+.upm/
+.agents/
+.local/
+
+# Replit startup scripts — only needed on Replit, not in VS Code
+start-all.sh
