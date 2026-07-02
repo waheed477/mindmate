@@ -1,6 +1,6 @@
 import express from "express";
 import { auth } from "../../middleware/auth.ts";
-import { Doctor } from "../../models/Doctor.ts";
+import { Doctor } from "../models/Doctor.ts";
 import {
   createAppointment,
   getAppointments,
@@ -44,13 +44,13 @@ const ensureDoctorProfileExists = async (req: express.Request, res: express.Resp
   }
 };
 
-router.post("/", createAppointment);
-router.get("/", getAppointments);
-router.get("/my-appointments", getAppointments);
-router.get("/doctor/:doctorId", ensureDoctorProfileExists, getDoctorAppointments);
-router.get("/patient/:patientId", getPatientAppointments);
-router.get("/:id", getAppointmentById);
-router.patch("/:id", updateAppointment);
-router.delete("/:id", deleteAppointment);
+router.post("/", createAppointment as any);
+router.get("/", getAppointments as any);
+router.get("/my-appointments", getAppointments as any);
+router.get("/doctor/:doctorId", ensureDoctorProfileExists, getDoctorAppointments as any);
+router.get("/patient/:patientId", getPatientAppointments as any);
+router.get("/:id", getAppointmentById as any);
+router.patch("/:id", updateAppointment as any);
+router.delete("/:id", deleteAppointment as any);
 
 export default router;

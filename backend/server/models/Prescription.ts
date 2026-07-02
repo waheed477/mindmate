@@ -45,4 +45,4 @@ const PrescriptionSchema = new mongoose.Schema(
 PrescriptionSchema.index({ patientId: 1, createdAt: -1 });
 PrescriptionSchema.index({ doctorId: 1, createdAt: -1 });
 
-export const Prescription = mongoose.model("Prescription", PrescriptionSchema);
+export const Prescription = mongoose.models.Prescription || mongoose.model("Prescription", PrescriptionSchema);

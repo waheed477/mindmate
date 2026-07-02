@@ -1,12 +1,12 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { authenticate } from "../../middleware/auth.js";
-import { User } from "../../models/User.ts";
-import { Doctor } from "../models/Doctor.js";
-import { Patient } from "../models/Patient.js";
-import { Appointment } from "../models/Appointment.js";
-import { Message } from "../models/Message.js";
-import { Prescription } from "../models/Prescription.js";
+import { User } from "../models/User.ts";
+import { Doctor } from "../models/Doctor.ts";
+import { Patient } from "../models/Patient.ts";
+import { Appointment } from "../models/Appointment.ts";
+import { Message } from "../models/Message.ts";
+import { Prescription } from "../models/Prescription.ts";
 
 const router = express.Router();
 router.use(authenticate);
@@ -14,8 +14,8 @@ router.use(authenticate);
 // PUT /api/profile/user — update name, phone, profilePicture on User + profile doc
 router.put("/user", async (req: express.Request, res: express.Response) => {
   try {
-    const userId = req.user.id;
-    const role = req.user.role;
+    const userId = (req.user as any).id;
+    const role = (req.user as any).role;
     const { fullName, profilePicture } = req.body;
 
     const userUpdates: any = {};
@@ -52,10 +52,10 @@ router.put("/user", async (req: express.Request, res: express.Response) => {
 // PUT /api/profile/patient — update patient-specific fields
 router.put("/patient", async (req: express.Request, res: express.Response) => {
   try {
-    if (req.user.role !== "patient") {
+    if ((req.user as any).role !== "patient") {
       return res.status(403).json({ success: false, message: "Patients only" });
     }
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { age, gender, contactNumber, address, emergencyContact, medicalHistory, profilePicture, fullName } = req.body;
 
     const updates: any = {};
@@ -81,10 +81,10 @@ router.put("/patient", async (req: express.Request, res: express.Response) => {
 // PUT /api/profile/doctor — update doctor-specific fields
 router.put("/doctor", async (req: express.Request, res: express.Response) => {
   try {
-    if (req.user.role !== "doctor") {
+    if ((req.user as any).role !== "doctor") {
       return res.status(403).json({ success: false, message: "Doctors only" });
     }
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const {
       fullName, specialization, qualification, experience, consultationFee,
       bio, licenseNumber, licensePicture, profilePicture, hospitalAffiliation,
@@ -115,8 +115,8 @@ router.put("/doctor", async (req: express.Request, res: express.Response) => {
 // DELETE /api/profile/account — delete account with password confirmation
 router.delete("/account", async (req: express.Request, res: express.Response) => {
   try {
-    const userId = req.user.id;
-    const role = req.user.role;
+    const userId = (req.user as any).id;
+    const role = (req.user as any).role;
     const { password } = req.body;
 
     if (!password) {

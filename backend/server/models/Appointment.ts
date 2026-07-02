@@ -95,7 +95,7 @@ AppointmentSchema.index({ status: 1 });
 AppointmentSchema.pre("save", function() {
   if (this.isModified("status")) {
     if (!this.activityLog) {
-      this.activityLog = [];
+      this.activityLog = [] as any;
     }
     
     const actionMap: Record<string, string> = {
@@ -114,4 +114,4 @@ AppointmentSchema.pre("save", function() {
   }
 });
 
-export const Appointment = mongoose.model("Appointment", AppointmentSchema);
+export const Appointment = mongoose.models.Appointment || mongoose.model("Appointment", AppointmentSchema);

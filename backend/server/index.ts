@@ -1,6 +1,9 @@
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
+import cookieParser from "cookie-parser";
+import passport from "passport";
+import "./services/passport.js"; // Initialize passport Google Strategy
 import { registerRoutes } from "./routes";
 import { connectDB } from "./db";
 import authRouter from "./auth.js";
@@ -16,9 +19,11 @@ import doctorRoutes from "./routes/doctors.js";
 const app = express();
 const httpServer = createServer(app);
 
-// ✅ FIX: Increase payload limits to 10MB
+// ✅ FIX: Increase payload limits to 10MB and add cookie-parser & passport
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+app.use(passport.initialize());
 
 // CORS — allow all origins (Replit proxy + local dev)
 app.use((req, res, next) => {

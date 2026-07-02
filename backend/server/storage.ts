@@ -1,8 +1,8 @@
-import { Doctor } from "./models/Doctor";
-import { Patient } from "./models/Patient";
-import { Appointment } from "./models/Appointment";
-import { User } from "../models/User.ts";
-import { Message } from "./models/Message";
+import { Doctor } from "./models/Doctor.ts";
+import { Patient } from "./models/Patient.ts";
+import { Appointment } from "./models/Appointment.ts";
+import { User } from "./models/User.ts";
+import { Message } from "./models/Message.ts";
 
 interface DoctorFilters {
   specialization?: string;

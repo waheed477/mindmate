@@ -83,3 +83,39 @@ export async function sendPasswordResetEmail(
     `,
   });
 }
+
+export async function sendMagicLinkEmail(
+  toEmail: string,
+  fullName: string,
+  token: string
+): Promise<void> {
+  const magicLink = `${BASE_URL}/login?magicToken=${token}`;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`\n🪄 [DEV] Magic login link for ${toEmail}: ${magicLink}\n`);
+  }
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+    console.warn("[Email] EMAIL_USER / EMAIL_APP_PASSWORD not set — skipping real send.");
+    return;
+  }
+
+  await createTransporter().sendMail({
+    from: `"${APP_NAME}" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: `${APP_NAME} — Sign in with Magic Link`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+        <h2 style="color: #0d9488; margin-bottom: 8px;">Sign in to ${APP_NAME}</h2>
+        <p style="color: #374151; font-size: 15px;">Hi ${fullName}, click the button below to sign in to your MindMate account. This link is only valid for 15 minutes and can be used once.</p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${magicLink}" style="display: inline-block; background: #0d9488; color: #fff; font-size: 16px; font-weight: bold; padding: 14px 32px; border-radius: 8px; text-decoration: none;">
+            Sign In Now
+          </a>
+        </div>
+        <p style="color: #6b7280; font-size: 13px;">If you didn't request this sign-in link, you can safely ignore this email.</p>
+        <p style="color: #9ca3af; font-size: 12px; margin-top: 16px; word-break: break-all;">Or copy this link: ${magicLink}</p>
+      </div>
+    `,
+  });
+}

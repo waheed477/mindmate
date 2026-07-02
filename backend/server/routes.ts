@@ -56,7 +56,7 @@ export async function registerRoutes(
   // Patients
   app.get(api.patients.get.path, requireAuth, async (req, res) => {
     try {
-      const patient = await storage.getPatient(Number(req.params.id));
+      const patient = await storage.getPatient(req.params.id);
       if (!patient) {
         return res.status(404).json({ 
           success: false,
@@ -85,12 +85,12 @@ export async function registerRoutes(
       if (user.role === "patient") {
         const patient = await storage.getPatientByUserId(user.id);
         if (patient) {
-          appointmentsList = await storage.getAppointmentsByPatient(patient.id);
+          appointmentsList = await storage.getAppointmentsByPatient(patient._id.toString());
         }
       } else if (user.role === "doctor") {
         const doctor = await storage.getDoctorByUserId(user.id);
         if (doctor) {
-          appointmentsList = await storage.getAppointmentsByDoctor(doctor.id);
+          appointmentsList = await storage.getAppointmentsByDoctor(doctor._id.toString());
         }
       }
       
@@ -129,7 +129,7 @@ export async function registerRoutes(
       const input = api.appointments.create.input.parse(req.body);
       const appointment = await storage.createAppointment({
         ...input,
-        patientId: patient.id,
+        patientId: patient._id.toString(),
       });
       
       res.status(201).json({
@@ -156,7 +156,7 @@ export async function registerRoutes(
     try {
       const { status, notes } = req.body;
       const appointment = await storage.updateAppointmentStatus(
-        Number(req.params.id),
+        req.params.id,
         status,
         notes
       );
@@ -178,7 +178,7 @@ export async function registerRoutes(
   app.get(api.messages.list.path, requireAuth, async (req, res) => {
     try {
       const user = req.user as any;
-      const otherUserId = Number(req.query.otherUserId);
+      const otherUserId = String(req.query.otherUserId);
 
       if (!otherUserId) {
         return res.status(400).json({ 

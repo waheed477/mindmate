@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import jwt from "jsonwebtoken";
-import { Message } from "./models/Message.js";
+import { Message } from "./models/Message.ts";
 
 const JWT_SECRET = process.env.JWT_SECRET || "mindmate-secret-key-123";
 

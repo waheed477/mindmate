@@ -1,23 +1,16 @@
 import { Request, Response } from 'express';
-import { Appointment } from '../models/Appointment.ts';
-import { Doctor } from '../models/Doctor.ts';
-import { Patient } from '../models/Patient.ts';
+import { Appointment } from "../server/models/Appointment.ts";
+import { Doctor } from "../server/models/Doctor.ts";
+import { Patient } from "../server/models/Patient.ts";
 
-interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    email?: string;
-  };
-}
-
-export const createAppointment = async (req: AuthRequest, res: Response) => {
+export const createAppointment = async (req: Request, res: Response) => {
   try {
-    if (req.user?.role !== 'patient') {
+    const user = req.user as any;
+    if (user?.role !== 'patient') {
       return res.status(403).json({ success: false, message: 'Only patients can book appointments' });
     }
 
-    const patient = await Patient.findOne({ userId: req.user.id });
+    const patient = await Patient.findOne({ userId: user.id });
     if (!patient) {
       return res.status(404).json({ success: false, message: 'Patient profile not found' });
     }
@@ -47,20 +40,21 @@ export const createAppointment = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getAppointments = async (req: AuthRequest, res: Response) => {
+export const getAppointments = async (req: Request, res: Response) => {
   try {
     let appointments;
+    const user = req.user as any;
     
-    if (req.user?.role === 'patient') {
-      const patient = await Patient.findOne({ userId: req.user.id });
+    if (user?.role === 'patient') {
+      const patient = await Patient.findOne({ userId: user.id });
       if (patient) {
         appointments = await Appointment.find({ patientId: patient._id })
           .populate('doctorId', 'fullName specialization consultationFee profilePicture');
       } else {
         appointments = [];
       }
-    } else if (req.user?.role === 'doctor') {
-      const doctor = await Doctor.findOne({ userId: req.user.id });
+    } else if (user?.role === 'doctor') {
+      const doctor = await Doctor.findOne({ userId: user.id });
       if (doctor) {
         appointments = await Appointment.find({ doctorId: doctor._id })
           .populate('patientId', 'fullName age condition contact');
@@ -78,7 +72,7 @@ export const getAppointments = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getAppointmentById = async (req: AuthRequest, res: Response) => {
+export const getAppointmentById = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
       .populate('patientId', 'fullName age condition contact')
@@ -94,7 +88,7 @@ export const getAppointmentById = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateAppointment = async (req: AuthRequest, res: Response) => {
+export const updateAppointment = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.id,
@@ -112,7 +106,7 @@ export const updateAppointment = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const deleteAppointment = async (req: AuthRequest, res: Response) => {
+export const deleteAppointment = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findByIdAndDelete(req.params.id);
     
@@ -126,7 +120,7 @@ export const deleteAppointment = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getDoctorAppointments = async (req: AuthRequest, res: Response) => {
+export const getDoctorAppointments = async (req: Request, res: Response) => {
   try {
     const appointments = await Appointment.find({ doctorId: req.params.doctorId })
       .populate('patientId', 'fullName age condition');
@@ -137,7 +131,7 @@ export const getDoctorAppointments = async (req: AuthRequest, res: Response) => 
   }
 };
 
-export const getPatientAppointments = async (req: AuthRequest, res: Response) => {
+export const getPatientAppointments = async (req: Request, res: Response) => {
   try {
     const appointments = await Appointment.find({ patientId: req.params.patientId })
       .populate('doctorId', 'fullName specialization consultationFee');

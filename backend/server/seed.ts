@@ -1,6 +1,6 @@
-import { User } from "./models/User.js";
-import { Doctor } from "./models/Doctor.js";
-import { Patient } from "./models/Patient.js";
+import { User } from "./models/User.ts";
+import { Doctor } from "./models/Doctor.ts";
+import { Patient } from "./models/Patient.ts";
 
 const TEST_ACCOUNTS = [
   {
@@ -80,7 +80,6 @@ export async function seedDatabase() {
         gender: p.gender,
         contactNumber: p.contactNumber,
         condition: "General",
-        contact: p.contactNumber,
       });
     }
 

@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import mongoose, { Schema, model, Types } from "mongoose";
 
 const PatientSchema = new Schema({
   userId: { type: Types.ObjectId, ref: "User", required: true },
@@ -14,4 +14,4 @@ const PatientSchema = new Schema({
   profilePicture: String,
 }, { timestamps: true });
 
-export const Patient = model("Patient", PatientSchema);
+export const Patient = mongoose.models.Patient || model("Patient", PatientSchema);

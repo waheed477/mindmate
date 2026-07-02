@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 // ✅ FIX DEPRECATION WARNING
 mongoose.set('strictQuery', true);
@@ -25,7 +25,7 @@ export async function connectDB() {
     }
     
     // Clear any existing models to prevent recompilation
-    mongoose.models = {};
+    (mongoose as any).models = {};
     
     // Connect with optimized settings
     const connection = await mongoose.connect(MONGODB_URI, {
@@ -42,8 +42,10 @@ export async function connectDB() {
     console.log("✅ MongoDB connected successfully");
     
     // Test with a simple query
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log("📁 Collections:", collections.map(c => c.name).join(", ") || "No collections yet");
+    if (mongoose.connection.db) {
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      console.log("📁 Collections:", collections.map(c => c.name).join(", ") || "No collections yet");
+    }
     
     return connection;
     

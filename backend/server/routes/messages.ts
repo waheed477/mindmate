@@ -1,10 +1,10 @@
 import express from "express";
 import { authenticate } from "../../middleware/auth.js";
-import { Message } from "../../models/Message.js";
-import { User } from "../../models/User.js";
-import { Doctor } from "../../models/Doctor.js";
-import { Appointment } from "../../models/Appointment.js";
-import { Patient } from "../../models/Patient.js";
+import { Message } from "../models/Message.ts";
+import { User } from "../models/User.ts";
+import { Doctor } from "../models/Doctor.ts";
+import { Appointment } from "../models/Appointment.ts";
+import { Patient } from "../models/Patient.ts";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.use(authenticate);
 // MUST be before /:receiverId to avoid being swallowed by the param route
 router.get("/doctor/patients", async (req, res) => {
   try {
-    const doctorUserId = req.user.id;
+    const doctorUserId = (req.user as any).id;
 
     const doctorProfile = await Doctor.findOne({ userId: doctorUserId }).lean();
     if (!doctorProfile) {
@@ -119,7 +119,7 @@ router.get("/doctor/patients", async (req, res) => {
 // GET /api/messages  — list all conversations (latest message per contact)
 router.get("/", async (req, res) => {
   try {
-    const myId = req.user.id;
+    const myId = (req.user as any).id;
 
     const messages = await Message.aggregate([
       { $match: { $or: [{ senderId: myId }, { receiverId: myId }] } },
@@ -152,7 +152,7 @@ router.get("/", async (req, res) => {
 // MUST be last among GET routes to avoid swallowing named paths above
 router.get("/:receiverId", async (req, res) => {
   try {
-    const myId = req.user.id;
+    const myId = (req.user as any).id;
     const { receiverId } = req.params;
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const skip = Number(req.query.skip) || 0;
