@@ -13,7 +13,11 @@ router.use(authenticate);
 // GET /api/messages/doctor/patients — all patients who interacted with logged-in doctor
 router.get("/doctor/patients", async (req, res) => {
   try {
-    const doctorUserId = req.user.id;
+    const user = req.user as any;
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const doctorUserId = user.id;
 
     const doctorProfile = await Doctor.findOne({ userId: doctorUserId }).lean();
     if (!doctorProfile) {
@@ -118,7 +122,11 @@ router.get("/doctor/patients", async (req, res) => {
 // GET /api/messages — list all conversations
 router.get("/", async (req, res) => {
   try {
-    const myId = req.user.id;
+    const user = req.user as any;
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const myId = user.id;
 
     const messages = await Message.aggregate([
       {
@@ -162,7 +170,11 @@ router.get("/", async (req, res) => {
 // GET /api/messages/:receiverId — fetch conversation history
 router.get("/:receiverId", async (req, res) => {
   try {
-    const myId = req.user.id;
+    const user = req.user as any;
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const myId = user.id;
     const { receiverId } = req.params;
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const skip = Number(req.query.skip) || 0;
