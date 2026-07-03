@@ -1,12 +1,12 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { authenticate } from "../../middleware/auth.js";
-import { User } from "../models/User";
-import { Doctor } from "../models/Doctor";
-import { Patient } from "../models/Patient";
-import { Appointment } from "../models/Appointment";
-import { Message } from "../models/Message";
-import { Prescription } from "../models/Prescription";
+import { User } from "../models/User.js";
+import { Doctor } from "../models/Doctor.js";
+import { Patient } from "../models/Patient.js";
+import { Appointment } from "../models/Appointment.js";
+import { Message } from "../models/Message.js";
+import { Prescription } from "../models/Prescription.js";
 
 const router = express.Router();
 router.use(authenticate);
@@ -133,7 +133,6 @@ router.delete("/account", async (req: express.Request, res: express.Response) =>
       return res.status(401).json({ success: false, message: "Incorrect password" });
     }
 
-    // Delete all related data
     if (role === "doctor") {
       const doctor = await Doctor.findOne({ userId });
       if (doctor) {
@@ -161,6 +160,3 @@ router.delete("/account", async (req: express.Request, res: express.Response) =>
 });
 
 export default router;
-
-
-
