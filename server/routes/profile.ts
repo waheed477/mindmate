@@ -1,12 +1,12 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { authenticate } from "../../middleware/auth.js";
-import { User } from "../server/models/User";
-import { Doctor } from "../server/models/Doctor";
-import { Patient } from "../server/models/Patient";
-import { Appointment } from "../server/models/Appointment";
-import { Message } from "../server/models/Message";
-import { Prescription } from "../server/models/Prescription";
+import { User } from "../models/User";
+import { Doctor } from "../models/Doctor";
+import { Patient } from "../models/Patient";
+import { Appointment } from "../models/Appointment";
+import { Message } from "../models/Message";
+import { Prescription } from "../models/Prescription";
 
 const router = express.Router();
 router.use(authenticate);
@@ -161,5 +161,6 @@ router.delete("/account", async (req: express.Request, res: express.Response) =>
 });
 
 export default router;
+
 
 

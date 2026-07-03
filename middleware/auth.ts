@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from "../server/models/User";
+import { User } from "../models/User";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindmate-secret-key-123';
 
@@ -36,5 +36,6 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction):
 
 // Also export as authenticate for compatibility
 export const authenticate = auth;
+
 
 
