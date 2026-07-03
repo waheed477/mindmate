@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from "../server/models/User";
+import { User } from "../server/models/User.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mindmate-secret-key-123';
 
