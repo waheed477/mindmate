@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { User } from "../models/User";
-import { Patient } from "../models/Patient";
+import { User } from '../models/User.js';
+import { Patient } from '../models/Patient.js';
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
