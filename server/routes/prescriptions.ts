@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticate } from "../../middleware/auth.js";
-import { Prescription } from "../models/Prescription";
-import { User } from "../models/User";
+import { Prescription } from "../server/models/Prescription";
+import { User } from "../server/models/User";
 import { getIO } from "../socket.js";
 
 const router = express.Router();
@@ -119,4 +119,5 @@ router.get("/doctor", async (req: express.Request, res: express.Response) => {
 });
 
 export default router;
+
 

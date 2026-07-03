@@ -1,6 +1,6 @@
 import express from "express";
 import { auth } from "../../middleware/auth";
-import { Doctor } from "../models/Doctor";
+import { Doctor } from "../server/models/Doctor";
 import {
   createAppointment,
   getAppointments,
@@ -54,3 +54,4 @@ router.patch("/:id", updateAppointment as any);
 router.delete("/:id", deleteAppointment as any);
 
 export default router;
+

@@ -1,10 +1,10 @@
 import express from "express";
 import { authenticate } from "../../middleware/auth.js";
-import { Message } from "../models/Message";
-import { User } from "../models/User";
-import { Doctor } from "../models/Doctor";
-import { Appointment } from "../models/Appointment";
-import { Patient } from "../models/Patient";
+import { Message } from "../server/models/Message";
+import { User } from "../server/models/User";
+import { Doctor } from "../server/models/Doctor";
+import { Appointment } from "../server/models/Appointment";
+import { Patient } from "../server/models/Patient";
 
 const router = express.Router();
 
@@ -183,4 +183,5 @@ router.get("/:receiverId", async (req, res) => {
 });
 
 export default router;
+
 
