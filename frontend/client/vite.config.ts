@@ -28,19 +28,24 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: true,
     hmr: false,
+    // FIXED: Added proxy timeout
     proxy: {
       "/api": {
         target: backendUrl,
         changeOrigin: true,
+        ws: true,
+        proxyTimeout: 120000,  // 2 minutes
+        timeout: 120000,       // 2 minutes
       },
       "/socket.io": {
         target: backendUrl,
         changeOrigin: true,
         ws: true,
+        proxyTimeout: 120000,  // 2 minutes
+        timeout: 120000,       // 2 minutes
       },
     },
   },
-  // FIXED: Simplified build output to "dist"
   build: {
     outDir: "dist",
     emptyOutDir: true,

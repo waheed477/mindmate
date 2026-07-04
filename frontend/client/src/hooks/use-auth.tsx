@@ -99,19 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // FIXED: Login function with 60s timeout
+  // FIXED: Login function - removed AbortController and timeout
   const login = async (email: string, password: string) => {
     setIsLoggingIn(true);
     try {
-      // ✅ Increased timeout to 60 seconds
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds
-      
-      const response = await api.post('/auth/login', { email, password }, {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
+      // ✅ Simple request without timeout
+      const response = await api.post('/auth/login', { email, password });
       
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
@@ -122,11 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: response.data.message };
     } catch (error: any) {
       console.error("Login error:", error);
-      
-      // ✅ Specific timeout error
-      if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
-        return { success: false, message: 'Connection timeout. Please check your network.' };
-      }
       
       const data = error.response?.data;
       if (data?.requiresVerification) {
@@ -144,20 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // FIXED: Register function with 60s timeout
+  // FIXED: Register function - removed AbortController and timeout
   const register = async (data: any): Promise<any> => {
     setIsRegistering(true);
     try {
-      // ✅ Increased timeout to 60 seconds
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-      
+      // ✅ Simple request without timeout
       const endpoint = data.role === 'patient' ? '/auth/register/patient' : '/auth/register/doctor';
-      const response = await api.post(endpoint, data, {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
+      const response = await api.post(endpoint, data);
       
       if (response.data.success) {
         if (response.data.requiresVerification) {
@@ -170,10 +151,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return response.data;
     } catch (error: any) {
       console.error('Register error:', error.response?.data || error.message);
-      // ✅ Specific timeout error
-      if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
-        throw new Error('Connection timeout. Please try again.');
-      }
       throw error;
     } finally {
       setIsRegistering(false);
