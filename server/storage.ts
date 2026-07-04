@@ -1,8 +1,8 @@
-import { Doctor } from "./models/Doctor";
-import { Patient } from "./models/Patient";
-import { Appointment } from "./models/Appointment";
-import { User } from "./models/User";
-import { Message } from "./models/Message";
+import { Doctor } from "./models/Doctor.js";
+import { Patient } from "./models/Patient.js";
+import { Appointment } from "./models/Appointment.js";
+import { User } from "./models/User.js";
+import { Message } from "./models/Message.js";
 
 interface DoctorFilters {
   specialization?: string;
@@ -149,4 +149,3 @@ export class DatabaseStorage {
 }
 
 export const storage = new DatabaseStorage();
-

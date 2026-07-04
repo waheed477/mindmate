@@ -2,7 +2,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
-import { api, errorSchemas } from "../shared/routes";
+import { api, errorSchemas } from "../shared/routes.js";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import appointmentRoutes from "./routes/appointments.js";

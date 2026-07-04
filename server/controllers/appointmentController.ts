@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { Appointment } from "../models/Appointment";
-import { Doctor } from "../models/Doctor";
-import { Patient } from "../models/Patient";
+import { Appointment } from "../models/Appointment.js";
+import { Doctor } from "../models/Doctor.js";
+import { Patient } from "../models/Patient.js";
 
 export const createAppointment = async (req: Request, res: Response) => {
   try {
@@ -158,6 +158,3 @@ export const getPatientAppointments = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
-

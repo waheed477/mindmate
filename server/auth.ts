@@ -3,9 +3,9 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import passport from "passport";
-import { User } from "./models/User";
-import { Doctor } from "./models/Doctor";
-import { Patient } from "./models/Patient";
+import { User } from "./models/User.js";
+import { Doctor } from "./models/Doctor.js";
+import { Patient } from "./models/Patient.js";
 import { getIO } from "./socket.js";
 import {
   sendVerificationEmail,
@@ -27,7 +27,7 @@ const setAuthCookie = (res: express.Response, token: string) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax", // Required for OAuth redirects
+    sameSite: "lax",
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 };
@@ -123,7 +123,6 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "Email already registered" });
     }
 
-    // Create user with isEmailVerified = false
     const user = await User.create({ email, password, role, fullName, isEmailVerified: false });
 
     if (role === "doctor") {
@@ -150,7 +149,6 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Generate Verification Code
     const code = generate6DigitCode();
     user.emailVerificationCode = code;
     user.emailVerificationExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -305,7 +303,6 @@ router.post("/login", loginRateLimiter, async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
-    // Check email verification
     if (!user.isEmailVerified) {
       const code = generate6DigitCode();
       user.emailVerificationCode = code;
@@ -435,7 +432,7 @@ router.post("/magic-link", loginRateLimiter, async (req, res) => {
         email,
         fullName,
         role: "patient",
-        isEmailVerified: false, // Verified once they click the link
+        isEmailVerified: false,
       });
 
       await Patient.create({
@@ -451,7 +448,7 @@ router.post("/magic-link", loginRateLimiter, async (req, res) => {
     const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
 
     user.magicLinkToken = hashedToken;
-    user.magicLinkExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins expiry
+    user.magicLinkExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
     await sendMagicLinkEmail(email, user.fullName || email, rawToken);
@@ -525,7 +522,6 @@ router.get("/me", async (req, res) => {
       return res.status(403).json({ success: false, message: "Account deactivated" });
     }
 
-    // Refresh token on page load
     const newToken = jwt.sign(
       { id: user._id.toString(), role: user.role },
       JWT_SECRET,
@@ -558,7 +554,7 @@ router.post("/forgot-password", loginRateLimiter, async (req, res) => {
 
     const resetToken = crypto.randomBytes(32).toString("hex");
     user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-    user.resetPasswordExpiresAt = new Date(Date.now() + 3600000); // 1 hour
+    user.resetPasswordExpiresAt = new Date(Date.now() + 3600000);
     
     await user.save();
 
@@ -603,4 +599,3 @@ router.post("/reset-password", loginRateLimiter, async (req, res) => {
 });
 
 export default router;
-

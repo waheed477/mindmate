@@ -1,6 +1,6 @@
-import { User } from "./models/User";
-import { Doctor } from "./models/Doctor";
-import { Patient } from "./models/Patient";
+import { User } from "./models/User.js";
+import { Doctor } from "./models/Doctor.js";
+import { Patient } from "./models/Patient.js";
 
 const TEST_ACCOUNTS = [
   {
@@ -93,4 +93,3 @@ export async function seedDatabase() {
     console.log("   🩺 doctor2@test.com  /  123456  (Doctor)\n");
   }
 }
-

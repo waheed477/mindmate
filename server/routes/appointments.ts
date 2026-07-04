@@ -1,6 +1,6 @@
 import express from "express";
-import { auth } from "../../middleware/auth";
-import { Doctor } from "../models/Doctor";
+import { auth } from "../../middleware/auth.js";
+import { Doctor } from "../models/Doctor.js";
 import {
   createAppointment,
   getAppointments,
@@ -9,7 +9,7 @@ import {
   deleteAppointment,
   getDoctorAppointments,
   getPatientAppointments
-} from "../controllers/appointmentController";
+} from "../controllers/appointmentController.js";
 
 const router = express.Router();
 
