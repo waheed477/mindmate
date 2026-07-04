@@ -99,13 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // FIXED: Login function with timeout handling
+  // FIXED: Login function with 60s timeout
   const login = async (email: string, password: string) => {
     setIsLoggingIn(true);
     try {
-      // ✅ Add timeout to fetch
+      // ✅ Increased timeout to 60 seconds
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds
       
       const response = await api.post('/auth/login', { email, password }, {
         signal: controller.signal
@@ -144,12 +144,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // FIXED: Register function with timeout handling
+  // FIXED: Register function with 60s timeout
   const register = async (data: any): Promise<any> => {
     setIsRegistering(true);
     try {
+      // ✅ Increased timeout to 60 seconds
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
       
       const endpoint = data.role === 'patient' ? '/auth/register/patient' : '/auth/register/doctor';
       const response = await api.post(endpoint, data, {
