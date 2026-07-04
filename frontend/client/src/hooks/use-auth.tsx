@@ -99,11 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // FIXED: Login function - removed AbortController and timeout
+  // FIXED: Login function - removed AbortController
   const login = async (email: string, password: string) => {
     setIsLoggingIn(true);
     try {
-      // ✅ Simple request without timeout
+      // ✅ Simple request without AbortController
       const response = await api.post('/auth/login', { email, password });
       
       if (response.data.success) {
@@ -132,11 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // FIXED: Register function - removed AbortController and timeout
+  // FIXED: Register function - removed AbortController
   const register = async (data: any): Promise<any> => {
     setIsRegistering(true);
     try {
-      // ✅ Simple request without timeout
+      // ✅ Simple request without AbortController
       const endpoint = data.role === 'patient' ? '/auth/register/patient' : '/auth/register/doctor';
       const response = await api.post(endpoint, data);
       
