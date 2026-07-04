@@ -1,0 +1,173 @@
+You are a senior full-stack developer with 10+ years of experience. Your task is to make the MindMate project COMPLETELY PRODUCTION-READY – a mental health support platform with ALL features working and ZERO errors when a recruiter clones and runs it.
+
+🎯 The Goal
+A recruiter should be able to:
+
+bash
+git clone https://github.com/waheed477/mindmate.git
+cd mindmate/backend && npm install && npm run dev
+cd ../frontend/client && npm install && npm run dev
+# Open http://localhost:3000
+# Login with patient@test.com / 123456
+# ALL features work perfectly
+✅ Features That MUST Work (Check Each One)
+Feature	Expected Behavior
+Registration	Patient & Doctor signup with all fields → saves to database
+Login	JWT token generated → user redirected to dashboard
+Session Persistence	After page refresh, user stays logged in (30-day token)
+Patient Dashboard	Shows list of doctors, appointment button, AI chat button
+Doctor Dashboard	Shows pending appointments, accept/reject buttons
+Appointment Booking	Patient selects doctor → date/time → appointment created
+Appointment Management	Doctor accepts/rejects → status updates in real-time
+Real-time Chat	Patient & Doctor chat after appointment accepted (Socket.io)
+Prescriptions	Doctor sends prescription → Patient views it
+AI Assistant	Chatbot with 22+ categories, 176+ responses, emergency detection
+Logout	Clears token → redirects to login
+Delete Account	User can delete their own account (soft delete)
+🔧 Specific Fixes Required
+1. Authentication & Session Persistence
+typescript
+// User model must have:
+isActive: { type: Boolean, default: true }
+lastLogin: { type: Date, default: null }
+loginCount: { type: Number, default: 0 }
+
+// JWT expires in 30 days (not 7 days)
+{ expiresIn: "30d" }
+
+// Login updates lastLogin and loginCount
+user.lastLogin = new Date();
+user.loginCount += 1;
+2. Appointment Booking (FIX VALIDATION ERROR)
+typescript
+// Appointment model: symptoms must be optional
+symptoms: { type: String, default: '' }  // NOT required
+
+// Backend accepts BOTH 'date' AND 'appointmentDate'
+const finalDate = appointmentDate || date;
+
+// Add route for my-appointments
+router.get("/my-appointments", getAppointments);
+3. AI Assistant (Full Implementation)
+Create 7 files in backend/server/ai/:
+
+constants.ts – 22 categories with keywords + 176 responses
+
+intent.classifier.ts – Emergency detection
+
+emotion.analyzer.ts – Emotion + sentiment detection
+
+response.generator.ts – 8 responses per category
+
+ai-manager.service.ts – Main engine
+
+context.manager.ts – Session + conversation history
+
+conversation.service.ts – Database operations
+
+Emergency numbers (Pakistan):
+
+Umeed-e-Nau: 0310-222-1919
+
+Edhi Foundation: 115
+
+Rohi Helpline: 0333-666-8787
+
+Pakistan Crisis Line: 0800-786-786
+
+AI Assistant MUST respond with human-like, empathetic responses – not robotic or generic.
+
+4. Chat (Socket.io Fix)
+typescript
+// Chat.tsx: Connect to backend port 5000
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+chatSocket = io(SOCKET_URL, { ... });
+
+// vite.config.ts: Proxy settings
+proxy: {
+  '/api': { target: 'http://localhost:5000', ws: true },
+  '/socket.io': { target: 'http://localhost:5000', ws: true }
+}
+5. Frontend Fixes
+typescript
+// use-auth.tsx MUST export getToken
+interface AuthContextType {
+  ...
+  getToken: () => string | null;  // ADD THIS
+}
+
+// register.tsx payload MUST use 'contact' not 'contactNumber'
+payload.contact = data.contactNumber;  // ✅ Correct
+📁 Files to Create/Update
+Backend (11 Files)
+backend/models/User.ts – Add session fields
+
+backend/models/Appointment.ts – Make symptoms optional
+
+backend/server/auth.ts – 30-day token, lastLogin tracking
+
+backend/controllers/appointmentController.ts – Fix validation
+
+backend/server/routes/appointments.ts – Add my-appointments route
+
+backend/middleware/auth.ts – Check isActive
+
+backend/server/routes/profile.ts – Delete account endpoint
+
+backend/server/ai/constants.ts – 22 categories
+
+backend/server/ai/intent.classifier.ts – Emergency detection
+
+backend/server/ai/emotion.analyzer.ts – Emotion analysis
+
+backend/server/ai/response.generator.ts – 176+ responses
+
+backend/server/ai/ai-manager.service.ts – Main AI engine
+
+backend/server/ai/context.manager.ts – Session tracking
+
+backend/server/ai/conversation.service.ts – Database ops
+
+backend/server/routes/ai-chat.ts – AI routes
+
+Frontend (5 Files)
+frontend/client/src/hooks/use-auth.tsx – Export getToken
+
+frontend/client/src/pages/register.tsx – Fix payload
+
+frontend/client/src/pages/Chat.tsx – Socket to port 5000
+
+frontend/client/vite.config.ts – Proxy settings
+
+frontend/client/src/App.tsx – Ensure routes work
+
+✅ Success Checklist
+After your fixes, confirm ALL of these:
+
+npm run dev in backend → ✅ No errors, server on port 5000
+
+npm run dev in frontend → ✅ No errors, server on port 3000
+
+Register a new patient → ✅ Saves to database
+
+Login with patient@test.com / 123456 → ✅ Redirects to dashboard
+
+Refresh page → ✅ Stays logged in
+
+Patient views doctors → ✅ Doctors list appears
+
+Book appointment → ✅ Appointment created (no validation errors)
+
+Login as doctor → ✅ Sees pending appointment
+
+Accept appointment → ✅ Status updates
+
+Chat between patient & doctor → ✅ Real-time messages work
+
+AI Assistant → ✅ Responds with human-like empathetic messages
+
+Doctor sends prescription → ✅ Patient can view it
+
+Logout → ✅ Clears token
+
+Login again → ✅ Works immediately

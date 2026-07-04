@@ -1,0 +1,175 @@
+ You are a senior full-stack developer. Make my MindMate project production ready so a recruiter can clone, install, and run it without ANY errors.
+
+Goal:
+A recruiter should be able to:
+
+Clone the repository
+
+Run npm install in backend and frontend
+
+Start MongoDB locally
+
+Run npm run dev in both folders
+
+The app works perfectly on first try – no errors, no missing files, no configuration issues
+
+Project Structure:
+text
+mindmate/
+├── backend/
+│   ├── models/
+│   │   ├── User.ts
+│   │   ├── Patient.ts
+│   │   ├── Doctor.ts
+│   │   ├── Appointment.ts
+│   │   └── Message.ts
+│   ├── middleware/
+│   │   └── auth.ts
+│   ├── server/
+│   │   ├── index.ts
+│   │   └── auth.ts
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── .env.example
+└── frontend/
+    └── client/
+        ├── src/
+        │   ├── hooks/
+        │   │   ├── use-auth.tsx
+        │   │   └── use-notifications.tsx
+        │   ├── services/
+        │   │   └── api.ts
+        │   ├── pages/
+        │   │   ├── login.tsx
+        │   │   └── register.tsx
+        │   ├── App.tsx
+        │   └── main.tsx
+        ├── package.json
+        ├── vite.config.ts
+        ├── .env.example
+        └── index.html
+Requirements:
+1. Backend MUST have:
+.env.example file with all required variables:
+
+text
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/mindmate
+JWT_SECRET=mindmate_super_secret_key_2024
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+package.json with correct scripts: "dev": "tsx watch server/index.ts"
+
+All dependencies listed (express, mongoose, bcryptjs, jsonwebtoken, cors, dotenv, tsx, typescript, etc.)
+
+tsconfig.json properly configured for ES modules
+
+2. Frontend MUST have:
+.env.example file:
+
+text
+VITE_API_URL=http://localhost:5000/api
+package.json with correct scripts: "dev": "vite --port 3000"
+
+All dependencies listed (react, react-dom, react-router-dom, axios, tailwindcss, etc.)
+
+vite.config.ts with proxy configuration pointing to backend port 5000
+
+3. Authentication MUST work:
+User can register as patient (email, password, fullName, age, condition, contact)
+
+User can register as doctor (email, password, fullName, specialization, consultationFee, licenseNumber)
+
+User can login immediately after registration
+
+User stays logged in after page refresh
+
+User can logout and login again
+
+Wrong credentials show proper error message
+
+Duplicate email registration shows "Email already exists"
+
+4. NO Errors Allowed:
+No Cannot find module errors
+
+No next is not a function errors
+
+No comparePassword is not a function errors
+
+No username_1 duplicate key errors
+
+No getToken is not a function errors
+
+No CORS errors
+
+No syntax errors
+
+5. Database Cleanup:
+Drop any old indexes that cause conflicts (like username_1)
+
+Ensure only _id_ and email_1 indexes exist on users collection
+
+6. README.md MUST include:
+markdown
+# MindMate - Mental Health Support Platform
+
+## Prerequisites
+- Node.js 18+
+- MongoDB running locally on port 27017
+
+## Setup Instructions
+
+### Backend
+```bash
+cd backend
+npm install
+cp .env.example .env
+npm run dev
+Frontend
+bash
+cd frontend/client
+npm install
+cp .env.example .env
+npm run dev
+Open Browser
+http://localhost:3000
+
+Test Accounts
+Patient: patient@test.com / 123456
+
+Doctor: doctor@test.com / 123456
+
+text
+
+---
+
+## **Output Instructions:**
+
+Provide **complete code** for ALL files mentioned above. Each file should be production ready, copy-paste working. No placeholders. No `// TODO` comments.
+
+For each file, show:
+```typescript
+// File: backend/models/User.ts
+[full code]
+
+// File: backend/server/auth.ts
+[full code]
+
+// ... and so on for all files
+Critical – Must Fix These Known Issues:
+Issue	Fix
+next is not a function	Use async function() without next parameter in pre-save hook
+username_1 duplicate key	Add migration script to drop old index
+comparePassword not found	Use bcrypt.compare() directly in auth.ts
+getToken not a function	Define getToken function in use-notifications
+400 Bad Request on login	Ensure backend accepts { email, password } exactly
+Login after logout fails	Ensure token is properly stored and retrieved
+Page refresh loses login	Add useEffect to load user from token
+Additional Script – Add to backend/package.json:
+json
+"scripts": {
+  "dev": "tsx watch server/index.ts",
+  "clean": "node -e \"require('mongodb').MongoClient.connect('mongodb://localhost:27017').then(client=>client.db('mindmate').collection('users').dropIndex('username_1').catch(()=>{}))\"",
+  "predev": "npm run clean"
+}

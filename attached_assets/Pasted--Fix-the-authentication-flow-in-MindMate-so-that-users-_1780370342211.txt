@@ -1,0 +1,119 @@
+ Fix the authentication flow in MindMate so that users sign up once and can log in anytime later. No duplicate registrations. Session must persist across browser closes and revisits.
+
+Current Expected Behavior vs Reality
+Feature	Expected	Current (if broken)
+User signs up	Creates account once	Works / May allow duplicate
+User logs out	Can log in again	Works
+User closes browser	Still logged in next time?	May require re-login
+User revisits site after days	Should stay logged in (if token valid)	Should work
+Duplicate registration	Should show "Email already exists"	May allow duplicate
+Check These Files and Fix as Needed
+1. Frontend – Token Storage (src/hooks/use-auth.ts)
+Ensure token is saved to localStorage (not sessionStorage):
+
+typescript
+// Should be localStorage, NOT sessionStorage
+localStorage.setItem('token', data.token);
+localStorage.setItem('user', JSON.stringify(data.user));
+On app load, check for existing token:
+
+typescript
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  if (token && user) {
+    setUser(JSON.parse(user));
+    setIsLoading(false);
+  }
+}, []);
+On logout, clear storage:
+
+typescript
+const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  setUser(null);
+};
+2. Backend – Prevent Duplicate Registration (authController.ts)
+Add check before creating user:
+
+typescript
+const existingUser = await User.findOne({ email });
+if (existingUser) {
+  return res.status(400).json({ 
+    success: false, 
+    message: 'Email already registered. Please login instead.' 
+  });
+}
+3. Backend – JWT Token Expiry (server.ts or authController.ts)
+Set reasonable expiry (e.g., 7 days or 30 days):
+
+typescript
+const token = jwt.sign(
+  { id: user._id, role: user.role },
+  process.env.JWT_SECRET,
+  { expiresIn: '7d' }  // 7 days – user stays logged in
+);
+4. Frontend – Protect Routes Without Token Redirect
+In App.tsx or protected route wrapper:
+
+typescript
+const token = localStorage.getItem('token');
+if (!token && requiredAuth) {
+  return <Redirect to="/login" />;
+}
+5. Backend – Token Verification Middleware (middleware/auth.ts)
+Should handle expired tokens gracefully:
+
+typescript
+try {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  req.user = decoded;
+  next();
+} catch (error) {
+  if (error.name === 'TokenExpiredError') {
+    return res.status(401).json({ message: 'Session expired. Please login again.' });
+  }
+  return res.status(401).json({ message: 'Invalid token. Please login.' });
+}
+6. Frontend – Auto-Login on Page Refresh
+In main.tsx or App.tsx root:
+
+typescript
+// Before rendering app, check for existing session
+const token = localStorage.getItem('token');
+if (token) {
+  // Verify token with backend
+  fetch('/api/auth/me', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // User is authenticated, continue
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+  });
+}
+7. Database – Ensure Unique Email Constraint
+In models/User.ts:
+
+typescript
+email: {
+  type: String,
+  required: true,
+  unique: true,  // ← This prevents duplicate emails at database level
+  lowercase: true
+}
+Test the Complete Flow
+Test Case	Action	Expected Result
+TC-01	Register new user	Account created, token saved
+TC-02	Close browser, reopen	Still logged in (if token not expired)
+TC-03	Try to register with same email	Error: "Email already exists"
+TC-04	Login with correct credentials	Success, redirect to dashboard
+TC-05	Login with wrong password	Error: "Invalid credentials"
+TC-06	Logout, then revisit site	Redirect to login page
+TC-07	After 7 days (token expiry)	Prompt to login again
+TC-08	Clear localStorage manually	Logged out, need to login again

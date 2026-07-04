@@ -1,0 +1,127 @@
+Enhance my AI assistant with keyword-response mapping. No fake numbers. Just quality responses.
+
+Create file: server/data/mentalHealthResponses.ts
+
+Add these 50+ keyword-response pairs:
+
+DEPRESSION (8 responses):
+- keywords: ["hopeless", "no hope", "nothing matters"] → "Hopelessness makes everything feel heavy. Depression lies to us. Have you noticed any small moment today where you felt even 1% better? That moment is real."
+- keywords: ["no motivation", "can't do anything", "lazy"] → "Motivation follows action, not the other way around. Can you try just 2 minutes of one small task? Just 2 minutes. That's it."
+- keywords: ["worthless", "no value", "useless"] → "You have value simply because you exist. Depression tells us we're worthless - that's a symptom, not truth. What's something you used to enjoy before you felt this way?"
+- keywords: ["empty", "numb", "nothing inside"] → "Emptiness is exhausting. Sometimes it's depression, sometimes it's burnout. When did you last feel genuinely interested in something?"
+- keywords: ["crying", "crying all the time"] → "Crying releases stress hormones. It's okay to cry. But if it's daily for weeks, your brain chemistry might need support. Have you talked to a doctor?"
+- keywords: ["don't enjoy anything", "no pleasure", "anhedonia"] → "Loss of pleasure is a classic depression symptom. Small things first: a warm drink, soft blanket, favorite old song. Don't demand joy - just presence."
+- keywords: ["fatigue", "always tired", "no energy"] → "Depression fatigue is real. It's not laziness. Rest without guilt today. Tomorrow, try a 5-minute walk outside. Sunlight helps."
+- keywords: ["withdrawing", "isolating", "don't want to see anyone"] → "Isolation makes depression worse even though it feels protective. Can you text one person today? Just text. No pressure to meet."
+
+ANXIETY (8 responses):
+- keywords: ["panic attack", "can't breathe", "heart racing"] → "You're safe. This panic will pass. Try: breathe in 4 seconds, hold 4, out 4. Name 5 things you can see right now. You're getting through this."
+- keywords: ["overthinking", "racing thoughts", "can't stop thinking"] → "Write the thought down. Ask: Is this true? Can I be 100% sure? How do I react when I believe this thought? What if the opposite were true?"
+- keywords: ["anxious", "anxiety", "nervous", "worried"] → "Anxiety is your brain's alarm system. Sometimes it false alarms. Ask: Is there actual danger right now? If not, try 5 deep breaths."
+- keywords: ["future", "what if", "scared of what happens"] → "Worry is about the future. Come back to now. What's actually happening in this moment? Usually it's not the disaster your brain is predicting."
+- keywords: ["social anxiety", "people judging", "embarrassed"] → "Most people are too worried about themselves to judge you. Start small: make eye contact with one person. Then smile. One small win at a time."
+- keywords: ["gad", "generalized anxiety", "always worried"] → "Constant worry exhausts your nervous system. Set a 'worry time' - 15 minutes daily. Write worries down then. Outside that time, tell yourself 'I'll worry at 5pm'."
+- keywords: ["health anxiety", "something wrong with me", "symptoms"] → "Health anxiety is real. One check with a doctor can rule out serious issues. After that, trust the results. Anxiety mimics symptoms - it's tricky."
+- keywords: ["ocd", "intrusive thoughts", "can't stop checking"] → "Intrusive thoughts are ego-dystonic - they go against your values. That's why they upset you. They don't mean anything about who you are. ERP therapy helps."
+
+SLEEP (5 responses):
+- keywords: ["can't fall asleep", "insomnia", "wide awake"] → "Get out of bed after 20 minutes. Do something boring in dim light. Return when sleepy. No phones. No clock watching."
+- keywords: ["waking up at night", "can't stay asleep"] → "Don't check the time. Deep breaths. Progressive muscle relaxation: tense and release each body part from toes to head."
+- keywords: ["nightmares", "bad dreams"] → "Nightmares often process daytime stress. Write them down in the morning - it reduces their power. EMDR therapy specifically helps trauma nightmares."
+- keywords: ["sleep hygiene", "better sleep routine"] → "Same wake time daily (even weekends). Sunlight within 30 minutes of waking. No caffeine after 2pm. No screens 1 hour before bed. Cool, dark, quiet room."
+- keywords: ["tired but can't sleep", "exhausted awake"] → "This is hyperarousal - common in anxiety. Try a 'brain dump': write everything on your mind. Then box breathing: 4 in, 4 hold, 4 out, 4 hold."
+
+MEDICATION (3 responses):
+- keywords: ["antidepressant", "ssri", "prozac", "zoloft", "lexapro"] → "SSRIs like fluoxetine, sertraline, and escitalopram are common antidepressants. They take 4-6 weeks to work. Only a psychiatrist can prescribe. Side effects are usually temporary."
+- keywords: ["need medicine", "medication", "pills"] → "I cannot prescribe medication. Only a doctor or psychiatrist can. But I can tell you: medication helps many people. There's no shame in it. See a psychiatrist for evaluation."
+- keywords: ["side effects", "medication side effects"] → "Common side effects include nausea, headache, sleep changes, or sexual side effects. Most are temporary. Never stop suddenly - that causes withdrawal. Talk to your prescriber."
+
+CRISIS/SUICIDE (5 responses - CRITICAL):
+- keywords: ["suicide", "kill myself", "end my life", "don't want to live"] → "⚠️ CRISIS ALERT: What you're feeling is very serious. Please call 988 (Suicide and Crisis Lifeline) right now. They're available 24/7. You are not alone. Can you tell someone near you how you're feeling?"
+- keywords: ["want to die", "better off dead", "no reason to live"] → "⚠️ I'm glad you reached out. Please call 988 immediately. Depression makes us believe things that aren't true. You matter. Your life matters. Help is available right now."
+- keywords: ["how to kill myself", "suicide method"] → "⚠️ I can't answer that. Please call 988 now. There are people who want to help you. You don't have to feel this way alone."
+- keywords: ["suicidal thoughts", "thinking about suicide"] → "Having suicidal thoughts is serious. It's not a character flaw - it's a symptom of severe depression. Call 988. They can help you make a safety plan. You can get through this."
+- keywords: ["988", "crisis line", "suicide hotline"] → "988 is the national Suicide and Crisis Lifeline. Call or text 988. They're available 24/7, free and confidential. Veterans press 1. Spanish speakers available."
+
+THERAPY (4 responses):
+- keywords: ["cbt", "cognitive behavioral therapy"] → "CBT is gold-standard for anxiety and depression. It works by changing thought patterns. Try this: write a negative thought, then write evidence against it. Do this daily."
+- keywords: ["finding therapist", "need therapist", "how to find therapist"] → "Psychology Today has a therapist finder. Filter by insurance, specialty, gender. Community mental health centers offer sliding scale fees ($20-50 per session). Online options: BetterHelp, Talkspace."
+- keywords: ["cost of therapy", "expensive therapy", "can't afford"] → "Open Path Collective offers $40-70 sessions. Many therapists offer sliding scale - just ask. Training clinics (universities) offer low-cost therapy ($10-30) with supervised students."
+- keywords: ["online therapy", "virtual therapy", "teletherapy"] → "Online therapy is effective. Options: BetterHelp ($65-90/week), Talkspace, or your local therapists via Zoom. Many insurance plans now cover teletherapy."
+
+STRESS (5 responses):
+- keywords: ["burnout", "exhausted from work", "no energy left"] → "Burnout isn't just tired - it's emotional exhaustion. Rest is productive. When did you last take a real break? Not a 'check email' break. A real one."
+- keywords: ["overwhelmed", "too much", "can't cope"] → "You're carrying too much. What's ONE thing you can drop or delegate today? Just one. You don't have to do everything."
+- keywords: ["stress management", "reduce stress", "less stress"] → "Quick stress relief: 5-minute meditation (try Balance app free). Walk outside. Call a friend. Write down what's worrying you. Exercise - even 10 minutes helps."
+- keywords: ["work stress", "job stress", "boss", "deadlines"] → "Work stress is real. Set boundaries: no email after 7pm. Take your lunch break away from desk. Talk to HR about EAP (Employee Assistance Program) - free counseling."
+- keywords: ["academic stress", "exam stress", "school stress"] → "One thing at a time. Break studying into 25-minute chunks (Pomodoro). Sleep before exam - pulling all-nighter hurts performance. You've gotten through hard things before."
+
+LONELINESS (4 responses):
+- keywords: ["lonely", "alone", "no friends", "no one"] → "Loneliness hurts, but you're not alone in feeling this way. Many people struggle with connection. Start small: text one person 'thinking of you'. Join a hobby group (Meetup app). Volunteer - helping others reduces loneliness."
+- keywords: ["isolated", "cut off", "no social contact"] → "Isolation is hard. Can you do one thing today: go to a coffee shop, say 'hi' to a cashier, join an online community (Discord, Reddit). Small social moments add up."
+- keywords: ["making friends", "how to make friends", "adult friendships"] → "Adult friendships take repeated contact. Join something: gym class, book club, volunteer, run club, church, board game night. Show up consistently. Friendship follows familiarity."
+- keywords: ["bumble bff", "friend app", "make friends online"] → "Bumble BFF, Meetup, and local Facebook groups help. Be proactive - suggest coffee. Most people are also lonely and want connection."
+
+ANGER (3 responses):
+- keywords: ["angry", "rage", "furious", "resentment"] → "Anger protects deeper pain. What are you really feeling underneath? Hurt? Fear? Injustice? Name the real emotion. Then the anger often softens."
+- keywords: ["always angry", "anger issues", "can't control anger"] → "Anger management: pause before speaking. Walk away. Cool down for 20 minutes. Then express using 'I feel... when you... I need...' statements. No blaming."
+- keywords: ["irritable", "snapping", "short temper"] → "Irritability is often depression or anxiety in disguise. Check your basics: sleep, hunger, stress. If you're snapping, you're likely running on empty. Rest."
+
+SELF-HARM (4 responses - CRITICAL):
+- keywords: ["cutting", "self harm", "hurt myself", "self injury"] → "⚠️ CRISIS ALERT: Self-harm is serious. Please call 988 or go to your nearest emergency room. You deserve support, not pain. Can you tell a trusted adult or friend right now?"
+- keywords: ["cut my arms", "self injury urges"] → "⚠️ These urges are intense but they pass. Try: hold ice cube until it melts, snap rubber band on wrist, draw on skin with red marker, intense exercise for 5 minutes. Then call 988."
+- keywords: ["stop self harming", "quit self harm"] → "Stopping self-harm takes support. Therapy helps (DBT especially). Alternatives: journaling, punching pillow, cold shower, ripping paper. You're not bad for struggling - you're surviving."
+- keywords: ["scars", "hide scars", "self harm scars"] → "Scars tell a story of survival. They don't define you. Bio-oil and silicone sheets reduce appearance over time. Most people don't notice or don't ask. You're more than your scars."
+
+EATING DISORDERS (3 responses):
+- keywords: ["anorexia", "not eating", "starving"] → "⚠️ Anorexia is serious. Medical monitoring is essential - low weight affects your heart. National Eating Disorders Association helpline: 1-800-931-2237. Please reach out today."
+- keywords: ["bulimia", "binge purge", "throwing up"] → "Bulimia damages your esophagus and teeth. Recovery is possible with specialized treatment. NEDA helpline: 1-800-931-2237. They can help you find local resources."
+- keywords: ["binge eating", "can't stop eating"] → "Binge eating disorder is real. It's not about willpower. Therapy helps (CBT and Interpersonal Therapy). Stop dieting - restriction triggers binges. Eat regular meals. See a specialist."
+
+TRAUMA/PTSD (3 responses):
+- keywords: ["ptsd", "trauma", "flashbacks"] → "Trauma lives in the body. Ground yourself during flashbacks: 5 things you see, 4 you feel, 3 you hear, 2 you smell, 1 you taste. EMDR therapy is highly effective for PTSD."
+- keywords: ["abuse", "childhood trauma", "csa"] → "What happened wasn't your fault. Healing takes time. Trauma-informed therapy helps (EMDR, CPT, somatic experiencing). RAINN.org has resources and hotline: 1-800-656-4673."
+- keywords: ["nightmares trauma", "trauma dreams"] → "Nightmares replay trauma. Imagery Rehearsal Therapy (IRT) helps. Write the nightmare, change the ending to something safe, rehearse new ending daily. Consider EMDR therapy."
+
+GREETINGS/SMALL TALK (4 responses):
+- keywords: ["hi", "hello", "hey", "good morning"] → "Hello! I'm MindMate AI. I'm here to support your mental wellbeing. You can talk to me about anxiety, depression, stress, sleep, relationships, or just how your day is going. What's on your mind?"
+- keywords: ["how are you", "how are you doing"] → "I'm here for you! I don't have feelings like humans do, but I'm fully present to support yours. How are YOU doing today? What's one thing on your mind?"
+- keywords: ["thank you", "thanks", "appreciate it"] → "You're very welcome. I'm glad I could help. Remember: reaching out when you struggle is strength, not weakness. Be gentle with yourself today."
+- keywords: ["goodbye", "bye", "see you later"] → "Take care of yourself. Remember: small steps matter. If things get hard, I'm here. And if it's an emergency, please call 988. You're not alone."
+
+POSITIVE/GRATITUDE (3 responses):
+- keywords: ["good day", "feeling better", "improving"] → "I'm genuinely glad to hear that! Celebrate the wins - even small ones. What helped you feel better? Doing more of that matters. You've got this."
+- keywords: ["grateful", "thankful", "blessed"] → "Gratitude practices rewire your brain for positivity. Want to try? Name 3 specific things you're grateful for today. They can be tiny - warm coffee, sunshine, a text from a friend."
+- keywords: ["proud of myself", "accomplished", "achievement"] → "That's wonderful! And important to acknowledge. What did you do? Whatever it was, you earned that pride. How can you build on this momentum?"
+
+FALLBACK (2 responses):
+- keywords: ["default", "no match"] → "Thank you for sharing that with me. Can you tell me more? The more I understand, the better I can support you. What's been on your mind lately?"
+- keywords: ["catch all"] → "I want to understand better. Could you say more about what you're experiencing? Even if it feels messy or unclear - that's okay. I'm here to listen."
+
+IMPLEMENTATION INSTRUCTIONS:
+
+1. Create folder: server/data/
+
+2. Create file: server/data/mentalHealthResponses.ts with all above keyword-response pairs
+
+3. Update server/routes/ai-chat.ts:
+   - Import the keyword map
+   - Before calling model, check user message against keywords (case-insensitive)
+   - Return matched response immediately (fast, no model delay)
+   - If no match, fall back to existing Kenko model
+
+4. Add logging to show which category was matched (for debugging)
+
+5. Add comment at top: "/* Enhanced response mapping based on mental health best practices */"
+
+After implementation:
+- "hi" → greeting response
+- "I feel hopeless" → depression response  
+- "can't sleep" → sleep response
+- "need medicine" → medication response
+- "want to die" → crisis response with 988
+- "how to make friends" → loneliness response
+
+All responses should be empathetic, evidence-based, and safe (no medical advice, crisis numbers included).
+
+Say "AI assistant enhanced with complete keyword-response mapping. All categories working."
