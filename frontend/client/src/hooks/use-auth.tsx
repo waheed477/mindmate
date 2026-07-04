@@ -99,17 +99,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
+  // FIXED: Login function with timeout handling
   const login = async (email: string, password: string) => {
     setIsLoggingIn(true);
     try {
-      const response = await api.post('/auth/login', { email, password });
+      // ✅ Add timeout to fetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+      
+      const response = await api.post('/auth/login', { email, password }, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         setUser(response.data.user);
         return { success: true, role: response.data.user?.role as string };
       }
       return { success: false, message: response.data.message };
     } catch (error: any) {
+      console.error("Login error:", error);
+      
+      // ✅ Specific timeout error
+      if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
+        return { success: false, message: 'Connection timeout. Please check your network.' };
+      }
+      
       const data = error.response?.data;
       if (data?.requiresVerification) {
         return {
@@ -126,11 +144,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // FIXED: Register function with timeout handling
   const register = async (data: any): Promise<any> => {
     setIsRegistering(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
       const endpoint = data.role === 'patient' ? '/auth/register/patient' : '/auth/register/doctor';
-      const response = await api.post(endpoint, data);
+      const response = await api.post(endpoint, data, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (response.data.success) {
         if (response.data.requiresVerification) {
           return { success: true, requiresVerification: true, email: response.data.email };
@@ -142,6 +169,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return response.data;
     } catch (error: any) {
       console.error('Register error:', error.response?.data || error.message);
+      // ✅ Specific timeout error
+      if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
+        throw new Error('Connection timeout. Please try again.');
+      }
       throw error;
     } finally {
       setIsRegistering(false);
