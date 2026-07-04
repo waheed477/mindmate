@@ -40,8 +40,9 @@ export default defineConfig({
       },
     },
   },
+  // FIXED: Simplified build output to "dist"
   build: {
-    outDir: path.resolve(__dirname, "../dist/public"),
+    outDir: "dist",
     emptyOutDir: true,
   },
 });
