@@ -9,7 +9,7 @@ import {
   deleteAppointment,
   getDoctorAppointments,
   getPatientAppointments
-} from "../../controllers/appointmentController";
+} from "../controllers/appointmentController";
 
 const router = express.Router();
 
@@ -54,5 +54,3 @@ router.patch("/:id", updateAppointment as any);
 router.delete("/:id", deleteAppointment as any);
 
 export default router;
-
-
