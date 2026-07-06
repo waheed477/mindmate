@@ -5,7 +5,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import authRouter from './auth.js';
-import { User } from "./models/User.ts";
+import { User } from "./models/User";
 
 const app = express();
 
@@ -129,3 +129,4 @@ describe('MindMate Authentication API Endpoints', () => {
     expect(lastRes?.body.message).toContain('Too many login attempts');
   });
 });
+

@@ -15,7 +15,9 @@ COPY . .
 RUN npm run build
 
 # Expose port
+# FIXED: Expose port 5000 for the backend API
 EXPOSE 5000
 
 # Start the application
+# FIXED: Use the correct entry point path
 CMD ["node", "dist/server/index.js"]

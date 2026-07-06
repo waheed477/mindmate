@@ -1,6 +1,6 @@
-import { User } from "./models/User.ts";
-import { Doctor } from "./models/Doctor.ts";
-import { Patient } from "./models/Patient.ts";
+import { User } from "./models/User.js";
+import { Doctor } from "./models/Doctor.js";
+import { Patient } from "./models/Patient.js";
 
 const TEST_ACCOUNTS = [
   {

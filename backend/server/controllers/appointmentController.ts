@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { Appointment } from "../models/Appointment.ts";
-import { Doctor } from "../models/Doctor.ts";
-import { Patient } from "../models/Patient.ts";
+import { Appointment } from "../models/Appointment.js";
+import { Doctor } from "../models/Doctor.js";
+import { Patient } from "../models/Patient.js";
 
 export const createAppointment = async (req: Request, res: Response) => {
   try {

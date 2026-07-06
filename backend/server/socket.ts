@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import jwt from "jsonwebtoken";
-import { Message } from "./models/Message.ts";
+import { Message } from "./models/Message.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "mindmate-secret-key-123";
 
@@ -24,7 +24,6 @@ export const setupSocket = (httpServer: HttpServer) => {
     transports: ["websocket", "polling"],
   });
 
-  // JWT auth middleware
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error("No token provided"));
@@ -43,17 +42,14 @@ export const setupSocket = (httpServer: HttpServer) => {
     const user = socket.data.user;
     console.log(`[Socket] Connected: ${user.id} (${user.role})`);
 
-    // Automatically join own user room (for direct delivery)
     socket.join(`user_${user.id}`);
 
-    // Join a private chat room with another user
     socket.on("join_room", ({ receiverId }: { receiverId: string }) => {
       const roomId = getRoomId(user.id, receiverId);
       socket.join(roomId);
       socket.emit("room_joined", { roomId });
     });
 
-    // Send a message — persist to DB, broadcast to room
     socket.on(
       "send_message",
       async ({ receiverId, content }: { receiverId: string; content: string }) => {
@@ -78,11 +74,8 @@ export const setupSocket = (httpServer: HttpServer) => {
 
           const roomId = getRoomId(user.id, receiverId);
 
-          // Send to receiver (others in room + their personal room for fallback)
           socket.to(roomId).emit("receive_message", payload);
           socket.to(`user_${receiverId}`).emit("receive_message", payload);
-
-          // Confirm back to sender with real DB _id (so they can replace optimistic message)
           socket.emit("message_sent", payload);
         } catch (err) {
           console.error("[Socket] send_message error:", err);
@@ -91,7 +84,6 @@ export const setupSocket = (httpServer: HttpServer) => {
       }
     );
 
-    // Mark messages as read
     socket.on("mark_read", async ({ senderId }: { senderId: string }) => {
       try {
         await Message.updateMany(
@@ -105,7 +97,6 @@ export const setupSocket = (httpServer: HttpServer) => {
       }
     });
 
-    // Typing indicators
     socket.on("typing", ({ receiverId }: { receiverId: string }) => {
       const roomId = getRoomId(user.id, receiverId);
       socket.to(roomId).emit("user_typing", {

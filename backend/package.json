@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch server/index.ts",
-    "start": "NODE_ENV=production node dist/index.cjs",
+    "build": "tsc",
+    "start": "node dist/server/index.js",
     "test": "vitest run"
   },
   "dependencies": {

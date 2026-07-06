@@ -1,12 +1,12 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { authenticate } from "../../middleware/auth.js";
-import { User } from "../models/User.ts";
-import { Doctor } from "../models/Doctor.ts";
-import { Patient } from "../models/Patient.ts";
-import { Appointment } from "../models/Appointment.ts";
-import { Message } from "../models/Message.ts";
-import { Prescription } from "../models/Prescription.ts";
+import { User } from "../models/User.js";
+import { Doctor } from "../models/Doctor.js";
+import { Patient } from "../models/Patient.js";
+import { Appointment } from "../models/Appointment.js";
+import { Message } from "../models/Message.js";
+import { Prescription } from "../models/Prescription.js";
 
 const router = express.Router();
 router.use(authenticate);
@@ -133,7 +133,6 @@ router.delete("/account", async (req: express.Request, res: express.Response) =>
       return res.status(401).json({ success: false, message: "Incorrect password" });
     }
 
-    // Delete all related data
     if (role === "doctor") {
       const doctor = await Doctor.findOne({ userId });
       if (doctor) {

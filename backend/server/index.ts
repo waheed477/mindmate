@@ -4,15 +4,15 @@ import { createServer } from "http";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import "./services/passport.js"; // Initialize passport Google Strategy
-import { registerRoutes } from "./routes";
-import { connectDB } from "./db";
+import { registerRoutes } from "./routes.js";
+import { connectDB } from "./db.js";
 import authRouter from "./auth.js";
-import { setupSocket } from "./socket";
-import { seedDatabase } from "./seed";
-import appointmentRoutes from "./routes/appointments";
-import messageRoutes from "./routes/messages";
-import prescriptionRoutes from "./routes/prescriptions";
-import profileRoutes from "./routes/profile";
+import { setupSocket } from "./socket.js";
+import { seedDatabase } from "./seed.js";
+import appointmentRoutes from "./routes/appointments.js";
+import messageRoutes from "./routes/messages.js";
+import prescriptionRoutes from "./routes/prescriptions.js";
+import profileRoutes from "./routes/profile.js";
 import aiChatRoutes from "./routes/ai-chat.js";
 import doctorRoutes from "./routes/doctors.js";
 
@@ -33,6 +33,24 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", "true");
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
+});
+
+// FIXED: Health check endpoints
+// Health check endpoint (must be at root)
+app.get("/", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+    message: "MindMate Backend is running",
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+    message: "MindMate API is running",
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Auth routes (must be before other routes)

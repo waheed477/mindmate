@@ -1,7 +1,7 @@
 import express from "express";
 import { authenticate } from "../../middleware/auth.js";
-import { Prescription } from "../models/Prescription.ts";
-import { User } from "../models/User.ts";
+import { Prescription } from "../models/Prescription.js";
+import { User } from "../models/User.js";
 import { getIO } from "../socket.js";
 
 const router = express.Router();
@@ -29,7 +29,6 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       }
     }
 
-    // Look up patient name server-side as authoritative fallback
     let resolvedPatientName = patientName || "";
     if (!resolvedPatientName) {
       const patientUser = await User.findById(patientId).select("fullName").lean() as any;
@@ -46,7 +45,6 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       patientName: resolvedPatientName,
     });
 
-    // Emit real-time notification to patient
     try {
       const io = getIO();
       io.to(`user_${patientId}`).emit("prescription_notification", {
@@ -55,7 +53,6 @@ router.post("/", async (req: express.Request, res: express.Response) => {
         medicineCount: medicines.length,
       });
     } catch (socketErr) {
-      // Non-fatal — socket may not be initialized in test environments
       console.warn("[Socket] Failed to emit prescription notification:", socketErr);
     }
 
