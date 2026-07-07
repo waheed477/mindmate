@@ -26,7 +26,6 @@ interface AuthContextType {
   register: (data: any) => Promise<{ success: boolean; requiresVerification?: boolean; email?: string }>;
   verifyEmail: (email: string, code: string) => Promise<any>;
   resendVerification: (email: string) => Promise<any>;
-  sendMagicLink: (email: string) => Promise<{ success: boolean; message?: string; magicToken?: string }>;
   logout: () => void;
   getToken: () => string | null;
   updateProfile: (updates: any) => Promise<void>;
@@ -45,35 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadUser = async () => {
-      // 1. Google OAuth Redirect Handler (check for ?token=xxx)
-      const params = new URLSearchParams(window.location.search);
-      const urlToken = params.get('token');
-      if (urlToken) {
-        localStorage.setItem('token', urlToken);
-        // Clean URL query parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      // 2. Magic Link Sign-In Handler (check for ?magicToken=xxx)
-      const magicToken = params.get('magicToken');
-      if (magicToken) {
-        setIsLoading(true);
-        try {
-          const response = await api.post('/auth/magic-login', { token: magicToken });
-          if (response.data.success) {
-            localStorage.setItem('token', response.data.token);
-            setUser(response.data.user);
-            // Clean URL query parameters
-            window.history.replaceState({}, document.title, window.location.pathname);
-            setIsLoading(false);
-            return;
-          }
-        } catch (error) {
-          console.error('Magic login validation error:', error);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }
-
       const token = getToken();
       if (!token) {
         setIsLoading(false);
@@ -99,11 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  // FIXED: Login function - removed AbortController
+  // FIXED: Login function - simplified
   const login = async (email: string, password: string) => {
     setIsLoggingIn(true);
     try {
-      // ✅ Simple request without AbortController
       const response = await api.post('/auth/login', { email, password });
       
       if (response.data.success) {
@@ -132,11 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // FIXED: Register function - removed AbortController
+  // FIXED: Register function - simplified
   const register = async (data: any): Promise<any> => {
     setIsRegistering(true);
     try {
-      // ✅ Simple request without AbortController
       const endpoint = data.role === 'patient' ? '/auth/register/patient' : '/auth/register/doctor';
       const response = await api.post(endpoint, data);
       
@@ -171,16 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.data;
   };
 
-  const sendMagicLink = async (email: string) => {
-    try {
-      const response = await api.post('/auth/magic-link', { email });
-      return response.data;
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to send magic link.';
-      return { success: false, message };
-    }
-  };
-
   const updateProfile = async (updates: any): Promise<void> => {
     if (!user) throw new Error('Not authenticated');
     if (user.role === 'doctor') {
@@ -212,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, isLoading, isLoggingIn, isRegistering,
-      login, register, verifyEmail, resendVerification, sendMagicLink, logout, getToken,
+      login, register, verifyEmail, resendVerification, logout, getToken,
       updateProfile, deleteAccount,
     }}>
       {children}

@@ -17,8 +17,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { Brain, User, Stethoscope, Mail, Loader2, CheckCircle2, RefreshCw } from "lucide-react";
 import { useState, useRef } from "react";
-import { FcGoogle } from "react-icons/fc";
-import { Label } from "@components/ui/label";
 
 const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -29,18 +27,11 @@ type LoginForm = z.infer<typeof loginSchema>;
 type Step = "login" | "verify";
 
 export default function Login() {
-  const { login, verifyEmail, resendVerification, sendMagicLink, isLoggingIn } = useAuth();
+  const { login, verifyEmail, resendVerification, isLoggingIn } = useAuth();
   const navigate = useNavigate();
   const [userType, setUserType] = useState<"patient" | "doctor">("patient");
   const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Magic link states
-  const [showMagicLink, setShowMagicLink] = useState(false);
-  const [magicEmail, setMagicEmail] = useState("");
-  const [isSendingMagic, setIsSendingMagic] = useState(false);
-  const [magicSuccess, setMagicSuccess] = useState("");
-  const [magicError, setMagicError] = useState("");
 
   // Verify step state
   const [step, setStep] = useState<Step>("login");
@@ -74,30 +65,6 @@ export default function Login() {
       setLoginError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || '/api'}/auth/google`;
-  };
-
-  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!magicEmail.trim()) return;
-    setIsSendingMagic(true);
-    setMagicError("");
-    setMagicSuccess("");
-    try {
-      const res = await sendMagicLink(magicEmail);
-      if (res.success) {
-        setMagicSuccess(res.message || "Magic link sent successfully!");
-      } else {
-        setMagicError(res.message || "Failed to send magic link.");
-      }
-    } catch (err: any) {
-      setMagicError(err.message || "An error occurred.");
-    } finally {
-      setIsSendingMagic(false);
     }
   };
 
@@ -385,83 +352,6 @@ export default function Login() {
                   </Button>
                 </form>
               </Form>
-
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2 hover:bg-muted/50 cursor-pointer"
-                  onClick={handleGoogleLogin}
-                  data-testid="button-google-login"
-                >
-                  <FcGoogle className="h-5 w-5" />
-                  <span>Sign in with Google</span>
-                </Button>
-
-                <div className="pt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-xs text-primary hover:underline cursor-pointer"
-                    onClick={() => {
-                      setShowMagicLink(!showMagicLink);
-                      setMagicError("");
-                      setMagicSuccess("");
-                    }}
-                  >
-                    {showMagicLink ? "Use Password Login" : "Sign in with a Magic Link"}
-                  </Button>
-                </div>
-
-                {showMagicLink && (
-                  <form onSubmit={handleMagicLinkSubmit} className="space-y-3 pt-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="magic-email" className="text-xs">Magic Link Email</Label>
-                      <Input
-                        id="magic-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={magicEmail}
-                        onChange={(e) => {
-                          setMagicEmail(e.target.value);
-                          setMagicError("");
-                          setMagicSuccess("");
-                        }}
-                        disabled={isSendingMagic}
-                        className="h-9"
-                        required
-                        data-testid="input-magic-email"
-                      />
-                    </div>
-                    
-                    {magicError && <p className="text-xs text-destructive">{magicError}</p>}
-                    {magicSuccess && <p className="text-xs text-green-600 font-medium">{magicSuccess}</p>}
-
-                    <Button
-                      type="submit"
-                      className="w-full h-9 bg-teal-600 hover:bg-teal-700 text-white"
-                      disabled={isSendingMagic || !magicEmail}
-                      data-testid="button-send-magic-link"
-                    >
-                      {isSendingMagic ? (
-                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending...</>
-                      ) : (
-                        "Send Magic Link"
-                      )}
-                    </Button>
-                  </form>
-                )}
-              </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 text-center text-sm text-muted-foreground">
               <div className="space-y-2">
