@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout-navbar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Bot, User, Phone, MessageCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Send, Bot, User, Phone, MessageCircle, AlertTriangle, Loader2, Sparkles, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -14,7 +14,10 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  model?: "groq" | "rule-based";
 }
+
+type AIModel = "groq" | "rule-based";
 
 const SUGGESTED_QUESTIONS = [
   "I've been feeling really anxious lately",
@@ -37,6 +40,7 @@ const WELCOME_MESSAGE: Message = {
   content:
     "Hello! I'm MindMate AI Assistant. I'm here to offer compassionate support and evidence-based guidance for your mental wellbeing. 💙\n\nYou can type your own message or choose one of the suggested topics below to get started. Everything you share here is private.",
   timestamp: new Date(),
+  model: "rule-based",
 };
 
 export default function AIAssistant() {
@@ -45,6 +49,7 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<AIModel>("rule-based");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -75,7 +80,7 @@ export default function AIAssistant() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, model: selectedModel }),
       });
 
       const data = await res.json();
@@ -87,6 +92,7 @@ export default function AIAssistant() {
         role: "assistant",
         content: data.response,
         timestamp: new Date(data.timestamp),
+        model: selectedModel,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -97,6 +103,7 @@ export default function AIAssistant() {
         content:
           "I'm sorry, I had trouble processing that. Please try again in a moment. If you're in crisis, please call 988 immediately.",
         timestamp: new Date(),
+        model: selectedModel,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -141,9 +148,40 @@ export default function AIAssistant() {
               <h1 className="font-semibold text-base">MindMate AI Assistant</h1>
               <p className="text-xs text-muted-foreground">Mental health support · Always available</p>
             </div>
-            <div className="ml-auto flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs text-muted-foreground">Online</span>
+            <div className="ml-auto flex items-center gap-2">
+              {/* FIXED: Model selector buttons */}
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                <button
+                  onClick={() => setSelectedModel("rule-based")}
+                  className={cn(
+                    "px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1.5",
+                    selectedModel === "rule-based"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  data-testid="model-rule-based"
+                >
+                  <Brain className="h-3.5 w-3.5" />
+                  <span>Rule</span>
+                </button>
+                <button
+                  onClick={() => setSelectedModel("groq")}
+                  className={cn(
+                    "px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1.5",
+                    selectedModel === "groq"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  data-testid="model-groq"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                  <span>Groq AI</span>
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 ml-2">
+                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs text-muted-foreground">Online</span>
+              </div>
             </div>
           </div>
 
@@ -185,16 +223,22 @@ export default function AIAssistant() {
                   <div className="whitespace-pre-wrap break-words">
                     {formatContent(msg.content)}
                   </div>
-                  <p
+                  <div
                     className={cn(
-                      "text-[10px] mt-1.5",
+                      "flex items-center gap-1.5 mt-1.5",
                       msg.role === "user"
-                        ? "text-primary-foreground/60 text-right"
+                        ? "text-primary-foreground/60 justify-end"
                         : "text-muted-foreground"
                     )}
                   >
-                    {format(msg.timestamp, "p")}
-                  </p>
+                    <span className="text-[10px]">{format(msg.timestamp, "p")}</span>
+                    {/* FIXED: Model label on AI messages */}
+                    {msg.role === "assistant" && msg.model && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted-foreground/10 text-muted-foreground/60">
+                        {msg.model === "groq" ? "Groq AI" : "Rule"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
