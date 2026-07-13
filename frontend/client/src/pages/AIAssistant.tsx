@@ -14,10 +14,10 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  model?: "groq" | "rule-based";
+  model?: "local" | "groq";
 }
 
-type AIModel = "groq" | "rule-based";
+type AIModel = "local" | "groq";
 
 const SUGGESTED_QUESTIONS = [
   "I've been feeling really anxious lately",
@@ -40,7 +40,7 @@ const WELCOME_MESSAGE: Message = {
   content:
     "Hello! I'm MindMate AI Assistant. I'm here to offer compassionate support and evidence-based guidance for your mental wellbeing. 💙\n\nYou can type your own message or choose one of the suggested topics below to get started. Everything you share here is private.",
   timestamp: new Date(),
-  model: "rule-based",
+  model: "local",
 };
 
 export default function AIAssistant() {
@@ -49,7 +49,7 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<AIModel>("rule-based");
+  const [selectedModel, setSelectedModel] = useState<AIModel>('local');
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -80,7 +80,14 @@ export default function AIAssistant() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: trimmed, model: selectedModel }),
+        body: JSON.stringify({
+          message: trimmed,
+          model: selectedModel,
+          history: messages.slice(-10).map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content
+          })),
+        }),
       });
 
       const data = await res.json();
@@ -92,7 +99,7 @@ export default function AIAssistant() {
         role: "assistant",
         content: data.response,
         timestamp: new Date(data.timestamp),
-        model: selectedModel,
+        model: data.model || selectedModel,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
@@ -101,7 +108,7 @@ export default function AIAssistant() {
         id: `err_${Date.now()}`,
         role: "assistant",
         content:
-          "I'm sorry, I had trouble processing that. Please try again in a moment. If you're in crisis, please call 988 immediately.",
+          "I'm sorry, I had trouble processing that. Please try again in a moment. If you're in crisis, please call 1122 immediately.",
         timestamp: new Date(),
         model: selectedModel,
       };
@@ -148,40 +155,37 @@ export default function AIAssistant() {
               <h1 className="font-semibold text-base">MindMate AI Assistant</h1>
               <p className="text-xs text-muted-foreground">Mental health support · Always available</p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              {/* FIXED: Model selector buttons */}
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+
+            {/* FIXED: Model Selector */}
+            <div className="ml-auto flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
                 <button
-                  onClick={() => setSelectedModel("rule-based")}
-                  className={cn(
-                    "px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1.5",
-                    selectedModel === "rule-based"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  data-testid="model-rule-based"
+                  onClick={() => setSelectedModel('local')}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    selectedModel === 'local'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
+                  data-testid="model-local"
                 >
-                  <Brain className="h-3.5 w-3.5" />
-                  <span>Rule</span>
+                  <Brain className="h-3.5 w-3.5 inline mr-1" />
+                  Local
                 </button>
                 <button
-                  onClick={() => setSelectedModel("groq")}
-                  className={cn(
-                    "px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1.5",
-                    selectedModel === "groq"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  onClick={() => setSelectedModel('groq')}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    selectedModel === 'groq'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
+                  }`}
                   data-testid="model-groq"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                  <span>Groq AI</span>
+                  <Sparkles className="h-3.5 w-3.5 inline mr-1 text-purple-500" />
+                  Groq AI
                 </button>
               </div>
-              <div className="flex items-center gap-1.5 ml-2">
-                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs text-muted-foreground">Online</span>
-              </div>
+              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs text-muted-foreground">Online</span>
             </div>
           </div>
 
@@ -233,9 +237,14 @@ export default function AIAssistant() {
                   >
                     <span className="text-[10px]">{format(msg.timestamp, "p")}</span>
                     {/* FIXED: Model label on AI messages */}
-                    {msg.role === "assistant" && msg.model && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted-foreground/10 text-muted-foreground/60">
-                        {msg.model === "groq" ? "Groq AI" : "Rule"}
+                    {msg.role === "assistant" && msg.model === "groq" && (
+                      <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[9px] font-medium">
+                        Groq AI
+                      </span>
+                    )}
+                    {msg.role === "assistant" && msg.model === "local" && (
+                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[9px] font-medium">
+                        Local
                       </span>
                     )}
                   </div>
